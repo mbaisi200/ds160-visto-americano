@@ -97,6 +97,7 @@ export default function AdminPage() {
   const [newCPF, setNewCPF] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
+  const [periodFilter, setPeriodFilter] = useState('todos');
 
   useEffect(() => {
     const initAdmin = async () => {
@@ -591,12 +592,44 @@ export default function AdminPage() {
     toast.success('Documento aberto! Use Ctrl+P (ou Cmd+P no Mac) para salvar como PDF.');
   };
 
+  // Função para verificar se está no período selecionado
+  const isInPeriod = (form: Formulario): boolean => {
+    if (periodFilter === 'todos') return true;
+    
+    const formDate = new Date(form.createdAt?.seconds * 1000);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    switch (periodFilter) {
+      case 'hoje':
+        return formDate >= today;
+      case 'semana': {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return formDate >= weekAgo;
+      }
+      case 'mes': {
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        return formDate >= monthAgo;
+      }
+      case 'trimestre': {
+        const quarterAgo = new Date(today);
+        quarterAgo.setMonth(quarterAgo.getMonth() - 3);
+        return formDate >= quarterAgo;
+      }
+      default:
+        return true;
+    }
+  };
+
   const filteredFormularios = formularios.filter(f => {
     const matchesSearch = f.cpf.includes(searchTerm) || 
       (f.dados?.firstName as string)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (f.dados?.lastName as string)?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'todos' || f.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesPeriod = isInPeriod(f);
+    return matchesSearch && matchesStatus && matchesPeriod;
   });
 
   // Remove duplicates - show only latest form per CPF
@@ -749,29 +782,45 @@ export default function AdminPage() {
           </Button>
         </div>
 
-        {/* Search */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Buscar por CPF ou nome..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-10 sm:h-9"
-            />
+        {/* Search and Filters */}
+        <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Buscar por CPF ou nome..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-10 sm:h-9"
+              />
+            </div>
           </div>
           {activeTab === 'formularios' && (
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48 h-10 sm:h-9">
-                <SelectValue placeholder="Filtrar status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="rascunho">Rascunho</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
-                <SelectItem value="processado">Processado</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                <SelectTrigger className="w-full sm:w-44 h-10 sm:h-9">
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os períodos</SelectItem>
+                  <SelectItem value="hoje">Hoje</SelectItem>
+                  <SelectItem value="semana">Última semana</SelectItem>
+                  <SelectItem value="mes">Último mês</SelectItem>
+                  <SelectItem value="trimestre">Últimos 3 meses</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-44 h-10 sm:h-9">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os status</SelectItem>
+                  <SelectItem value="rascunho">Rascunho</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
+                  <SelectItem value="processado">Processado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           )}
         </div>
 
