@@ -49,3 +49,6 @@ prompt
 server.log
 # Skills directory
 /skills/firebase-key.json
+
+# Firebase
+firebase-key.json
