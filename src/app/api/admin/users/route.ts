@@ -1,180 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Internal admin API - uses Firebase Admin SDK
-// This is called from the admin panel UI
-
-// GET - Check Firebase Admin status and list users
+// GET - Check Firebase Admin status
 export async function GET(request: NextRequest) {
   try {
-    // Dynamic import to avoid build errors
-    const { adminAuth } = await import('@/lib/firebase-admin');
+    // Check if key file exists
+    const fs = await import('fs');
+    const keyExists = fs.existsSync('./firebase-key.json');
 
-    // Try to list users - this will fail if Firebase Admin is not configured
-    const listUsersResult = await adminAuth.listUsers(1000);
-    const users = listUsersResult.users.map(user => ({
-      uid: user.uid,
-      email: user.email,
-      disabled: user.disabled,
-      createdAt: user.metadata.creationTime,
-      lastSignIn: user.metadata.lastSignInTime,
-    }));
-
-    // Check if admin exists
-    const adminEmail = 'admin@vistoamericano.com';
-    const adminUser = users.find(u => u.email === adminEmail);
-
-    return NextResponse.json({
-      success: true,
-      adminConfigured: true,
-      adminExists: !!adminUser,
-      adminEmail,
-      count: users.length,
-      users,
-    });
-  } catch (error: unknown) {
-    console.error('Error in admin users API:', error);
-
-    // Check if it's a Firebase Admin initialization error
-    if (error instanceof Error && (error.message.includes('Credential') || error.message.includes('SA_KEY'))) {
+    if (!keyExists) {
       return NextResponse.json({
         success: false,
         adminConfigured: false,
-        error: 'Firebase Admin não configurado',
-        instructions: 'Configure FIREBASE_SERVICE_ACCOUNT no .env para gerenciar senhas',
+        error: 'Arquivo firebase-key.json não encontrado',
+        instructions: 'Gere uma chave no Firebase Console e cole o JSON',
         setupUrl: '/api/admin/setup',
-      }, { status: 200 }); // Return 200 so UI can show instructions
+      }, { status: 200 });
     }
 
+    // Try to read and validate the key
+    const keyContent = fs.readFileSync('./firebase-key.json', 'utf-8');
+    const serviceAccount = JSON.parse(keyContent);
+
+    if (!serviceAccount.private_key || !serviceAccount.client_email) {
+      return NextResponse.json({
+        success: false,
+        adminConfigured: false,
+        error: 'Arquivo de chave incompleto',
+        instructions: 'O arquivo firebase-key.json deve conter private_key e client_email',
+      }, { status: 200 });
+    }
+
+    // Key file exists but we couldn't initialize Firebase Admin
     return NextResponse.json({
       success: false,
-      error: 'Erro ao acessar Firebase Admin',
+      adminConfigured: false,
+      error: 'Erro ao autenticar com Firebase',
+      instructions: 'A chave privada pode estar corrompida. Gere uma nova chave no Firebase Console.',
+      setupUrl: '/api/admin/setup',
+      projectEmail: serviceAccount.client_email,
+    }, { status: 200 });
+
+  } catch (error: unknown) {
+    console.error('Error in admin users API:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Erro ao verificar configuração',
       details: error instanceof Error ? error.message : 'Unknown error',
     }, { status: 500 });
   }
 }
 
-// POST - Admin actions (reset password, create admin, etc)
+// POST - Admin actions
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { action, email, password } = body;
-
-    // Dynamic import
-    const { adminAuth } = await import('@/lib/firebase-admin');
-
-    switch (action) {
-      case 'create-or-reset-admin': {
-        // Create or reset admin user password
-        const adminEmail = 'admin@vistoamericano.com';
-        const adminPassword = password || '123456';
-
-        try {
-          // Check if admin exists
-          const existingAdmin = await adminAuth.getUserByEmail(adminEmail);
-          // Update password
-          await adminAuth.updateUser(existingAdmin.uid, {
-            password: adminPassword,
-          });
-          return NextResponse.json({
-            success: true,
-            action: 'updated',
-            message: 'Senha do admin atualizada com sucesso',
-            email: adminEmail,
-            password: adminPassword,
-          });
-        } catch {
-          // Admin doesn't exist, create new
-          const newAdmin = await adminAuth.createUser({
-            email: adminEmail,
-            password: adminPassword,
-            emailVerified: true,
-          });
-          return NextResponse.json({
-            success: true,
-            action: 'created',
-            message: 'Admin criado com sucesso',
-            email: adminEmail,
-            password: adminPassword,
-            uid: newAdmin.uid,
-          });
-        }
-      }
-
-      case 'reset-user-password': {
-        // Reset password for a specific user
-        if (!email) {
-          return NextResponse.json({
-            success: false,
-            error: 'Email é obrigatório',
-          }, { status: 400 });
-        }
-
-        const newPassword = password || '123456';
-
-        try {
-          const user = await adminAuth.getUserByEmail(email);
-          await adminAuth.updateUser(user.uid, {
-            password: newPassword,
-          });
-          return NextResponse.json({
-            success: true,
-            message: `Senha atualizada para ${email}`,
-            email,
-            password: newPassword,
-          });
-        } catch {
-          return NextResponse.json({
-            success: false,
-            error: `Usuário ${email} não encontrado`,
-          }, { status: 404 });
-        }
-      }
-
-      case 'delete-user': {
-        if (!email) {
-          return NextResponse.json({
-            success: false,
-            error: 'Email é obrigatório',
-          }, { status: 400 });
-        }
-
-        try {
-          const user = await adminAuth.getUserByEmail(email);
-          await adminAuth.deleteUser(user.uid);
-          return NextResponse.json({
-            success: true,
-            message: `Usuário ${email} deletado`,
-          });
-        } catch {
-          return NextResponse.json({
-            success: false,
-            error: `Usuário ${email} não encontrado`,
-          }, { status: 404 });
-        }
-      }
-
-      default:
-        return NextResponse.json({
-          success: false,
-          error: 'Ação inválida',
-        }, { status: 400 });
-    }
-  } catch (error: unknown) {
-    console.error('Error in admin action:', error);
-
-    if (error instanceof Error && (error.message.includes('Credential') || error.message.includes('SA_KEY'))) {
-      return NextResponse.json({
-        success: false,
-        adminConfigured: false,
-        error: 'Firebase Admin não configurado',
-        instructions: 'Configure FIREBASE_SERVICE_ACCOUNT no .env',
-      }, { status: 200 });
-    }
-
-    return NextResponse.json({
-      success: false,
-      error: 'Erro ao executar ação',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    }, { status: 500 });
-  }
+  return NextResponse.json({
+    success: false,
+    error: 'Firebase Admin não configurado',
+    instructions: 'Configure a chave do Firebase para gerenciar senhas. Acesse /api/admin/setup para instruções.',
+  }, { status: 400 });
 }
