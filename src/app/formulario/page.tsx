@@ -2007,10 +2007,10 @@ export default function FormularioPage() {
     </div>
   </div>
 )}
-n              </div>
+              </div>
 
-n              {/* Já foi casado - MOVED HERE */}
-n              <div className="space-y-4 pt-4 border-t">
+              {/* Já foi casado - MOVED HERE */}
+              <div className="space-y-4 pt-4 border-t">
 <div className="space-y-2">
   <Label>Já foi casado(a)? *</Label>
   <Select
@@ -2104,10 +2104,10 @@ n              <div className="space-y-4 pt-4 border-t">
     </div>
   </div>
 )}
-n              </div>
+              </div>
 
-n              {/* Spouse */}
-n              <div className="space-y-4 pt-4 border-t">
+              {/* Spouse */}
+              <div className="space-y-4 pt-4 border-t">
 <h4 className="font-medium text-gray-700">Cônjuge</h4>
 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
   <div className="space-y-2 md:col-span-2">
@@ -2150,7 +2150,7 @@ n              <div className="space-y-4 pt-4 border-t">
     </Select>
   </div>
 </div>
-n              </div>
+              </div>
 
               {formData.spouseSameAddress === 'NAO' && (
                 <div className="space-y-4 pl-4 border-l-2 border-gray-200">
