@@ -543,8 +543,97 @@ export default function FormularioPage() {
     router.push('/');
   };
 
+  // Função para validar campos obrigatórios antes de enviar
+  const validateRequiredFields = (): string[] => {
+    const errors: string[] = [];
+
+    // Seção 0
+    if (!formData.applicationLocation) errors.push('Local de Solicitação');
+
+    // Seção 1 - Informações Pessoais
+    if (!formData.lastName) errors.push('Sobrenome');
+    if (!formData.firstName) errors.push('Nome');
+    if (!formData.birthDate) errors.push('Data de Nascimento');
+    if (!formData.birthCity) errors.push('Cidade/Estado de Nascimento');
+
+    // Seção 2 - Contato
+    if (!formData.address) errors.push('Endereço');
+    if (!formData.neighborhood) errors.push('Bairro');
+    if (!formData.city) errors.push('Cidade');
+    if (!formData.contactState) errors.push('Estado');
+    if (!formData.zipCode) errors.push('CEP');
+    if (!formData.phone1) errors.push('Telefone Principal');
+    if (!formData.email) errors.push('E-mail');
+
+    // Seção 3 - Endereço de Correspondência
+    if (!formData.sameAddress) errors.push('Endereço de correspondência é o mesmo?');
+
+    // Seção 4 - Redes Sociais
+    if (!formData.hasSocialMedia) errors.push('Possui redes sociais?');
+
+    // Seção 5 - Passaporte
+    if (!formData.passportSeries) errors.push('Série do Passaporte');
+    if (!formData.passportNumber) errors.push('Número do Passaporte');
+    if (!formData.passportIssueDate) errors.push('Data de Emissão do Passaporte');
+    if (!formData.passportExpiryDate) errors.push('Data de Expiração do Passaporte');
+    if (!formData.passportIssueCity) errors.push('Cidade de Emissão do Passaporte');
+    if (!formData.passportIssueState) errors.push('Estado de Emissão do Passaporte');
+
+    // Seção 6 - Viagem
+    if (!formData.travelReason) errors.push('Motivo da viagem');
+    if (!formData.hasTravelPlans) errors.push('Possui planos específicos?');
+
+    // Seção 7 - Vistos Anteriores
+    if (!formData.usTravelHistory) errors.push('Já teve visto para os EUA?');
+
+    // Seção 8 - Informações Familiares
+    if (!formData.relativesInUSA) errors.push('Possui parentes nos EUA?');
+    
+    // Se SIM para parentes nos EUA, campos são obrigatórios
+    if (formData.relativesInUSA === 'SIM') {
+      if (!formData.relativeName) errors.push('Nome do parente');
+      if (!formData.relativeRelation) errors.push('Relação com o parente');
+    }
+
+    if (!formData.wasMarried) errors.push('Já foi casado(a)?');
+    
+    // Se SIM para casamento anterior, campos são obrigatórios
+    if (formData.wasMarried === 'SIM') {
+      if (!formData.exSpouseName) errors.push('Nome do ex-cônjuge');
+      if (!formData.exSpouseBirthDate) errors.push('Data de nascimento do ex-cônjuge');
+      if (!formData.marriageDate) errors.push('Data do casamento');
+      if (!formData.divorceDate) errors.push('Data do divórcio');
+      if (!formData.divorceReason) errors.push('Motivo do divórcio');
+    }
+
+    // Seção 9 - Ocupação Atual
+    if (!formData.jobTitle) errors.push('Ocupação');
+    if (!formData.companyName) errors.push('Nome da Empresa/Escola');
+    if (!formData.companyAddress) errors.push('Endereço da Empresa');
+    if (!formData.companyCity) errors.push('Cidade da Empresa');
+    if (!formData.companyState) errors.push('Estado da Empresa');
+    if (!formData.companyZip) errors.push('CEP da Empresa');
+    if (!formData.companyStartDate) errors.push('Data de início');
+    if (!formData.companySalary) errors.push('Remuneração');
+    if (!formData.jobDescription) errors.push('Descrição das funções');
+
+    // Seção 11 - Universitário
+    if (!formData.hasUniversity) errors.push('Frequentou escola ou universidade?');
+
+    return errors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validar campos obrigatórios
+    const errors = validateRequiredFields();
+    if (errors.length > 0) {
+      toast.error(`Preencha os campos obrigatórios: ${errors.slice(0, 5).join(', ')}${errors.length > 5 ? '...' : ''}`);
+      setSubmitting(false);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -1028,7 +1117,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.lastName}
                     onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -1036,7 +1125,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.firstName}
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    required
+                   
                   />
                 </div>
               </div>
@@ -1083,7 +1172,7 @@ export default function FormularioPage() {
                     type="date"
                     value={formData.birthDate}
                     onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -1092,7 +1181,7 @@ export default function FormularioPage() {
                     value={formData.birthCity}
                     onChange={(e) => handleInputChange('birthCity', e.target.value)}
                     placeholder="Ex: SAO PAULO/SP"
-                    required
+                   
                   />
                 </div>
               </div>
@@ -1134,7 +1223,7 @@ export default function FormularioPage() {
                 <Input
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  required
+                 
                 />
               </div>
 
@@ -1144,7 +1233,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.neighborhood}
                     onChange={(e) => handleInputChange('neighborhood', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -1152,7 +1241,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
-                    required
+                   
                   />
                 </div>
               </div>
@@ -1163,7 +1252,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.contactState}
                     onChange={(e) => handleInputChange('contactState', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -1171,7 +1260,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.zipCode}
                     onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                    required
+                   
                   />
                 </div>
               </div>
@@ -1182,7 +1271,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.phone1}
                     onChange={(e) => handleInputChange('phone1', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -1208,7 +1297,7 @@ export default function FormularioPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value.toLowerCase())}
-                    required
+                   
                   />
                 </div>
               </div>
@@ -1283,7 +1372,7 @@ export default function FormularioPage() {
                 <Select
                   value={formData.sameAddress}
                   onValueChange={(value) => handleSelectChange('sameAddress', value)}
-                  required
+                 
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione SIM ou NÃO" />
@@ -1365,7 +1454,7 @@ export default function FormularioPage() {
                 <Select
                   value={formData.hasSocialMedia}
                   onValueChange={(value) => handleSelectChange('hasSocialMedia', value)}
-                  required
+                 
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione SIM ou NÃO" />
@@ -1436,7 +1525,7 @@ export default function FormularioPage() {
                     value={formData.passportSeries}
                     onChange={(e) => handleInputChange('passportSeries', e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2))}
                     maxLength={2}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -1444,7 +1533,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.passportNumber}
                     onChange={(e) => handleInputChange('passportNumber', e.target.value)}
-                    required
+                   
                   />
                 </div>
               </div>
@@ -1456,7 +1545,7 @@ export default function FormularioPage() {
                     type="date"
                     value={formData.passportIssueDate}
                     onChange={(e) => handleInputChange('passportIssueDate', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -1465,7 +1554,7 @@ export default function FormularioPage() {
                     type="date"
                     value={formData.passportExpiryDate}
                     onChange={(e) => handleInputChange('passportExpiryDate', e.target.value)}
-                    required
+                   
                   />
                 </div>
               </div>
@@ -1477,7 +1566,7 @@ export default function FormularioPage() {
                     value={formData.passportIssueCity}
                     onChange={(e) => handleInputChange('passportIssueCity', e.target.value)}
                     placeholder="Ex: SAO PAULO"
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -1487,7 +1576,7 @@ export default function FormularioPage() {
                     onChange={(e) => handleInputChange('passportIssueState', e.target.value)}
                     placeholder="Ex: SP"
                     maxLength={2}
-                    required
+                   
                   />
                 </div>
               </div>
@@ -1509,7 +1598,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.travelReason}
                     onChange={(e) => handleInputChange('travelReason', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -1517,7 +1606,7 @@ export default function FormularioPage() {
                   <Select
                     value={formData.hasTravelPlans}
                     onValueChange={(value) => handleSelectChange('hasTravelPlans', value)}
-                    required
+                   
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione SIM ou NÃO" />
@@ -1758,7 +1847,7 @@ export default function FormularioPage() {
                 <Select
                   value={formData.usTravelHistory}
                   onValueChange={(value) => handleSelectChange('usTravelHistory', value)}
-                  required
+                 
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione SIM ou NÃO" />
@@ -1957,7 +2046,7 @@ export default function FormularioPage() {
   <Select
     value={formData.relativesInUSA}
     onValueChange={(value) => handleSelectChange('relativesInUSA', value)}
-    required
+   
   >
     <SelectTrigger>
       <SelectValue placeholder="Selecione SIM ou NÃO" />
@@ -1977,7 +2066,7 @@ export default function FormularioPage() {
         <Input
           value={formData.relativeName}
           onChange={(e) => handleInputChange('relativeName', e.target.value)}
-          required
+         
         />
       </div>
       <div className="space-y-2">
@@ -1985,7 +2074,7 @@ export default function FormularioPage() {
         <Input
           value={formData.relativeRelation}
           onChange={(e) => handleInputChange('relativeRelation', e.target.value)}
-          required
+         
         />
       </div>
     </div>
@@ -2016,7 +2105,7 @@ export default function FormularioPage() {
   <Select
     value={formData.wasMarried}
     onValueChange={(value) => handleSelectChange('wasMarried', value)}
-    required
+   
   >
     <SelectTrigger>
       <SelectValue placeholder="Selecione SIM ou NÃO" />
@@ -2036,7 +2125,7 @@ export default function FormularioPage() {
         <Input
           value={formData.exSpouseName}
           onChange={(e) => handleInputChange('exSpouseName', e.target.value)}
-          required
+         
         />
       </div>
       <div className="space-y-2">
@@ -2045,7 +2134,7 @@ export default function FormularioPage() {
           type="date"
           value={formData.exSpouseBirthDate}
           onChange={(e) => handleInputChange('exSpouseBirthDate', e.target.value)}
-          required
+         
         />
       </div>
     </div>
@@ -2072,7 +2161,7 @@ export default function FormularioPage() {
           type="date"
           value={formData.marriageDate}
           onChange={(e) => handleInputChange('marriageDate', e.target.value)}
-          required
+         
         />
       </div>
       <div className="space-y-2">
@@ -2081,7 +2170,7 @@ export default function FormularioPage() {
           type="date"
           value={formData.divorceDate}
           onChange={(e) => handleInputChange('divorceDate', e.target.value)}
-          required
+         
         />
       </div>
     </div>
@@ -2098,7 +2187,7 @@ export default function FormularioPage() {
         <Textarea
           value={formData.divorceReason}
           onChange={(e) => handleInputChange('divorceReason', e.target.value)}
-          required
+         
         />
       </div>
     </div>
@@ -2228,7 +2317,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.jobTitle}
                     onChange={(e) => handleInputChange('jobTitle', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -2236,7 +2325,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.companyName}
                     onChange={(e) => handleInputChange('companyName', e.target.value)}
-                    required
+                   
                   />
                 </div>
               </div>
@@ -2246,7 +2335,7 @@ export default function FormularioPage() {
                 <Input
                   value={formData.companyAddress}
                   onChange={(e) => handleInputChange('companyAddress', e.target.value)}
-                  required
+                 
                 />
               </div>
 
@@ -2256,7 +2345,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.companyCity}
                     onChange={(e) => handleInputChange('companyCity', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -2264,7 +2353,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.companyState}
                     onChange={(e) => handleInputChange('companyState', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -2272,7 +2361,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.companyZip}
                     onChange={(e) => handleInputChange('companyZip', e.target.value)}
-                    required
+                   
                   />
                 </div>
               </div>
@@ -2292,7 +2381,7 @@ export default function FormularioPage() {
                     type="date"
                     value={formData.companyStartDate}
                     onChange={(e) => handleInputChange('companyStartDate', e.target.value)}
-                    required
+                   
                   />
                 </div>
                 <div className="space-y-2">
@@ -2309,7 +2398,7 @@ export default function FormularioPage() {
                 <Textarea
                   value={formData.jobDescription}
                   onChange={(e) => handleInputChange('jobDescription', e.target.value)}
-                  required
+                 
                 />
               </div>
 
@@ -2421,7 +2510,7 @@ export default function FormularioPage() {
                 <Select
                   value={formData.hasUniversity}
                   onValueChange={(value) => handleSelectChange('hasUniversity', value)}
-                  required
+                 
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione SIM ou NÃO" />
