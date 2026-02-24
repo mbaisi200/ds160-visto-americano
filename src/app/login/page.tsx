@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,8 +17,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signInWithCPF, user, userData } = useAuth();
+  const { signInWithCPF, user, userData, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Redirecionar se já estiver logado
+  useEffect(() => {
+    if (authLoading) return; // Aguardar carregar auth
+    
+    if (user) {
+      // Verificar se é admin pelo email
+      const isAdmin = user.email === 'admin@vistoamericano.com' || userData?.role === 'admin';
+      if (isAdmin) {
+        router.push('/admin');
+      } else {
+        router.push('/formulario');
+      }
+    }
+  }, [user, userData, authLoading, router]);
 
   const handleCPFChange = (value: string) => {
     // Permite digitar "admin" sem máscara
@@ -57,6 +72,24 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  // Mostrar loading enquanto verifica auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234]">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      </div>
+    );
+  }
+
+  // Se já logado, não mostrar o form (vai redirecionar)
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234]">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234] p-4">

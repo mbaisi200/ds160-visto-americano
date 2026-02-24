@@ -1,6 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -12,10 +15,46 @@ import {
   BadgeCheck,
   Plane,
   Clock,
-  Globe
+  Globe,
+  Loader2
 } from 'lucide-react';
 
 export default function HomePage() {
+  const { user, userData, loading } = useAuth();
+  const router = useRouter();
+
+  // Redirecionar se já estiver logado
+  useEffect(() => {
+    if (loading) return;
+    
+    if (user) {
+      const isAdmin = user.email === 'admin@vistoamericano.com' || userData?.role === 'admin';
+      if (isAdmin) {
+        router.push('/admin');
+      } else {
+        router.push('/formulario');
+      }
+    }
+  }, [user, userData, loading, router]);
+
+  // Mostrar loading enquanto verifica auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234]">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      </div>
+    );
+  }
+
+  // Se já logado, mostrar loading (vai redirecionar)
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234]">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234]">
       {/* Header */}
