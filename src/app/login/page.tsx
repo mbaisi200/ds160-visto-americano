@@ -22,8 +22,10 @@ export default function LoginPage() {
 
   const handleCPFChange = (value: string) => {
     // Permite digitar "admin" sem máscara
-    if (value.toLowerCase() === 'admin' || value.toLowerCase().startsWith('admin')) {
-      setCpf(value.toLowerCase());
+    // Se o valor atual começa com letra 'a', permite digitar sem máscara
+    const lowerValue = value.toLowerCase();
+    if (lowerValue === 'admin' || lowerValue.startsWith('a') || /^[a-zA-Z]/.test(value)) {
+      setCpf(lowerValue);
     } else {
       setCpf(maskCPF(value));
     }
