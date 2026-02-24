@@ -71,6 +71,14 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+          <Alert className="mb-4 border-green-300 bg-green-50">
+            <Info className="h-4 w-4 text-green-600 flex-shrink-0" />
+            <AlertDescription className="text-green-800 text-xs sm:text-sm">
+              <strong>💡 Dica importante:</strong> Após entrar no formulário, clique no botão <strong>&quot;Salvar Informações&quot;</strong> para guardar seus dados. 
+              Faça isso sempre que preencher novas informações para não perder nada!
+            </AlertDescription>
+          </Alert>
+
           <Alert className="mb-4 border-blue-300 bg-blue-50">
             <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
             <AlertDescription className="text-blue-800 text-xs sm:text-sm">

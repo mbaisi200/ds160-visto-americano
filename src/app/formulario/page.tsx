@@ -479,10 +479,14 @@ export default function FormularioPage() {
     }
   };
 
-  // Auto-save - transparente (silencioso) - usa refs para não resetar o timer
+  // Salvar rascunho manualmente
+  const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
   const saveDraft = useCallback(async () => {
     if (!user || !userData?.cpf || blocked) return;
 
+    setSaving(true);
     try {
       const currentFormData = formDataRef.current;
       const currentFormId = existingFormIdRef.current;
@@ -495,7 +499,6 @@ export default function FormularioPage() {
           nome: nomeCompleto,
           updatedAt: serverTimestamp()
         });
-        console.log('Auto-save realizado:', new Date().toLocaleTimeString());
       } else {
         const docRef = await addDoc(collection(db, 'ds160_forms'), {
           userId: user.uid,
@@ -506,49 +509,19 @@ export default function FormularioPage() {
           status: 'rascunho'
         });
         setExistingFormId(docRef.id);
-        console.log('Rascunho criado:', new Date().toLocaleTimeString());
+        existingFormIdRef.current = docRef.id;
       }
+      setLastSaved(new Date());
+      toast.success('Informações salvas com sucesso!');
     } catch (error) {
       console.error('Error saving draft:', error);
+      toast.error('Erro ao salvar informações. Tente novamente.');
+    } finally {
+      setSaving(false);
     }
   }, [user, userData, blocked]);
 
-  // Auto-save every 10 seconds
-  useEffect(() => {
-    if (!user || !userData?.cpf || blocked) return;
 
-    const interval = setInterval(async () => {
-      try {
-        const currentFormData = formDataRef.current;
-        const currentFormId = existingFormIdRef.current;
-        const cpfLimpo = userData.cpf.replace(/\D/g, '');
-        const nomeCompleto = `${currentFormData.firstName} ${currentFormData.lastName}`.trim();
-
-        if (currentFormId) {
-          await updateDoc(doc(db, 'ds160_forms', currentFormId), {
-            dados: { ...currentFormData },
-            nome: nomeCompleto,
-            updatedAt: serverTimestamp()
-          });
-        } else {
-          const docRef = await addDoc(collection(db, 'ds160_forms'), {
-            userId: user.uid,
-            cpf: cpfLimpo,
-            nome: nomeCompleto,
-            dados: { ...currentFormData },
-            createdAt: serverTimestamp(),
-            status: 'rascunho'
-          });
-          setExistingFormId(docRef.id);
-          existingFormIdRef.current = docRef.id;
-        }
-      } catch (error) {
-        console.error('Erro no auto-save:', error);
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [user, userData, blocked]);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
@@ -962,12 +935,18 @@ export default function FormularioPage() {
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={saveDraft}
-                className="h-9 sm:h-8"
+                disabled={saving}
+                className="h-9 sm:h-8 bg-green-600 hover:bg-green-700"
               >
-                <Save className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Salvar</span>
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin sm:mr-1" />
+                ) : (
+                  <Save className="h-4 w-4 sm:mr-1" />
+                )}
+                <span className="hidden sm:inline">{saving ? 'Salvando...' : 'Salvar Informações'}</span>
               </Button>
               <Button
                 variant="outline"
@@ -991,6 +970,20 @@ export default function FormularioPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-4 sm:py-6">
+        {/* Alerta importante sobre salvar */}
+        <Alert className="mb-4 border-blue-300 bg-blue-50">
+          <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0" />
+          <AlertDescription className="text-blue-800 text-xs sm:text-sm">
+            <strong>⚠️ Importante:</strong> Clique no botão <strong>&quot;Salvar Informações&quot;</strong> acima para guardar seus dados. 
+            Faça isso sempre que preencher novas informações. Seus dados ficarão salvos mesmo se você sair da página.
+            {lastSaved && (
+              <span className="block mt-1 text-green-700">
+                ✓ Último salvamento: {lastSaved.toLocaleTimeString('pt-BR')}
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
+
         <Alert className="mb-4 sm:mb-6 border-yellow-300 bg-yellow-50">
           <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
           <AlertDescription className="text-yellow-800 text-xs sm:text-sm">
