@@ -21,7 +21,12 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleCPFChange = (value: string) => {
-    setCpf(maskCPF(value));
+    // Permite digitar "admin" sem máscara
+    if (value.toLowerCase() === 'admin' || value.toLowerCase().startsWith('admin')) {
+      setCpf(value.toLowerCase());
+    } else {
+      setCpf(maskCPF(value));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
