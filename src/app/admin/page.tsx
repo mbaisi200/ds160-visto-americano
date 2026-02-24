@@ -391,13 +391,31 @@ export default function AdminPage() {
     }
   };
 
-  const updateFormStatus = async (formId: string, status: string) => {
+  const updateFormStatus = async (formId: string, status: string, cpf: string) => {
     try {
+      // Atualizar status do formulário
       await updateDoc(doc(db, 'ds160_forms', formId), {
         status,
         updatedAt: new Date()
       });
-      toast.success('Status atualizado');
+
+      // Se status for "processado", bloquear o CPF do cliente
+      if (status === 'processado' && cpf) {
+        const cpfDoc = await getDoc(doc(db, 'authorized_cpfs', cpf));
+        if (cpfDoc.exists()) {
+          await updateDoc(doc(db, 'authorized_cpfs', cpf), {
+            blocked: true,
+            blockedAt: new Date(),
+            blockedReason: 'Formulário processado'
+          });
+          toast.success('Status atualizado e cliente bloqueado');
+        } else {
+          toast.success('Status atualizado');
+        }
+      } else {
+        toast.success('Status atualizado');
+      }
+
       loadData();
     } catch (error) {
       console.error('Error updating status:', error);
@@ -768,36 +786,56 @@ export default function AdminPage() {
                 <p className="text-center text-gray-500 py-8">Nenhum formulário encontrado</p>
               ) : (
                 <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <table className="w-full min-w-[600px]">
+                  <table className="w-full min-w-[800px]">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3 px-4 sm:px-2">CPF</th>
                         <th className="text-left py-3 px-4 sm:px-2">Nome</th>
-                        <th className="text-left py-3 px-4 sm:px-2">Status</th>
+                        <th className="text-left py-3 px-4 sm:px-2">CPF</th>
+                        <th className="text-left py-3 px-4 sm:px-2">Email</th>
                         <th className="text-left py-3 px-4 sm:px-2">Data</th>
+                        <th className="text-left py-3 px-4 sm:px-2">Status</th>
                         <th className="text-right py-3 px-4 sm:px-2">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {uniqueFormularios.map(form => (
                         <tr key={form.id} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4 sm:px-2 text-sm font-medium">
+                            {form.nome || `${form.dados?.firstName || ''} ${form.dados?.lastName || ''}`.trim() || '-'}
+                          </td>
                           <td className="py-3 px-4 sm:px-2 font-mono text-sm">
                             {formatCPFDisplay(form.cpf)}
                           </td>
-                          <td className="py-3 px-4 sm:px-2 text-sm">
-                            {form.nome || `${form.dados?.firstName || ''} ${form.dados?.lastName || ''}`.trim() || '-'}
-                          </td>
-                          <td className="py-3 px-4 sm:px-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              form.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
-                              form.status === 'processado' ? 'bg-green-100 text-green-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {form.status?.toUpperCase()}
-                            </span>
+                          <td className="py-3 px-4 sm:px-2 text-sm text-gray-600">
+                            {form.dados?.email || '-'}
                           </td>
                           <td className="py-3 px-4 sm:px-2 text-sm text-gray-500">
                             {formatDate(form.createdAt)}
+                          </td>
+                          <td className="py-3 px-4 sm:px-2">
+                            <Select
+                              value={form.status}
+                              onValueChange={(value) => updateFormStatus(form.id, value, form.cpf)}
+                            >
+                              <SelectTrigger className={`h-8 w-32 ${
+                                form.status === 'pendente' ? 'border-yellow-400 bg-yellow-50' :
+                                form.status === 'processado' ? 'border-green-400 bg-green-50' :
+                                'border-gray-300 bg-gray-50'
+                              }`}>
+                                <span className={`font-medium ${
+                                  form.status === 'pendente' ? 'text-yellow-700' :
+                                  form.status === 'processado' ? 'text-green-700' :
+                                  'text-gray-700'
+                                }`}>
+                                  {form.status?.toUpperCase()}
+                                </span>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="rascunho">RASCUNHO</SelectItem>
+                                <SelectItem value="pendente">PENDENTE</SelectItem>
+                                <SelectItem value="processado">PROCESSADO</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </td>
                           <td className="py-3 px-4 sm:px-2">
                             <div className="flex justify-end gap-1">
@@ -806,6 +844,7 @@ export default function AdminPage() {
                                 size="sm"
                                 onClick={() => { setSelectedForm(form); setShowDialog(true); }}
                                 className="h-9 w-9 sm:h-8 sm:w-8 p-0"
+                                title="Visualizar"
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -827,16 +866,6 @@ export default function AdminPage() {
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
-                              {form.status === 'pendente' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => updateFormStatus(form.id, 'processado')}
-                                  className="text-green-600 h-9 w-9 sm:h-8 sm:w-8 p-0"
-                                >
-                                  ✓
-                                </Button>
-                              )}
                             </div>
                           </td>
                         </tr>
