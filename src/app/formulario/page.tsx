@@ -1279,13 +1279,14 @@ export default function FormularioPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>O endereço de correspondência é o mesmo da residência?</Label>
+                <Label>O endereço de correspondência é o mesmo da residência? *</Label>
                 <Select
                   value={formData.sameAddress}
                   onValueChange={(value) => handleSelectChange('sameAddress', value)}
+                  required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                    <SelectValue placeholder="Selecione SIM ou NÃO" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="SIM">SIM</SelectItem>
@@ -1360,13 +1361,14 @@ export default function FormularioPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Possui redes sociais?</Label>
+                <Label>Possui redes sociais? *</Label>
                 <Select
                   value={formData.hasSocialMedia}
                   onValueChange={(value) => handleSelectChange('hasSocialMedia', value)}
+                  required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                    <SelectValue placeholder="Selecione SIM ou NÃO" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="NAO">NÃO</SelectItem>
@@ -1503,20 +1505,22 @@ export default function FormularioPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Motivo da viagem</Label>
+                  <Label>Motivo da viagem *</Label>
                   <Input
                     value={formData.travelReason}
                     onChange={(e) => handleInputChange('travelReason', e.target.value)}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Possui planos específicos?</Label>
+                  <Label>Possui planos específicos? *</Label>
                   <Select
                     value={formData.hasTravelPlans}
                     onValueChange={(value) => handleSelectChange('hasTravelPlans', value)}
+                    required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue placeholder="Selecione SIM ou NÃO" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="SIM">SIM</SelectItem>
@@ -1750,13 +1754,14 @@ export default function FormularioPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Já teve visto para os EUA?</Label>
+                <Label>Já teve visto para os EUA? *</Label>
                 <Select
                   value={formData.usTravelHistory}
                   onValueChange={(value) => handleSelectChange('usTravelHistory', value)}
+                  required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                    <SelectValue placeholder="Selecione SIM ou NÃO" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="NAO">NÃO</SelectItem>
@@ -1947,105 +1952,205 @@ export default function FormularioPage() {
 
               {/* Relatives in USA */}
               <div className="space-y-4 pt-4 border-t">
-                <div className="space-y-2">
-                  <Label>Possui parentes nos EUA?</Label>
-                  <Select
-                    value={formData.relativesInUSA}
-                    onValueChange={(value) => handleSelectChange('relativesInUSA', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="NAO">NÃO</SelectItem>
-                      <SelectItem value="SIM">SIM</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+<div className="space-y-2">
+  <Label>Possui parentes nos EUA? *</Label>
+  <Select
+    value={formData.relativesInUSA}
+    onValueChange={(value) => handleSelectChange('relativesInUSA', value)}
+    required
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Selecione SIM ou NÃO" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="NAO">NÃO</SelectItem>
+      <SelectItem value="SIM">SIM</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
 
-                {formData.relativesInUSA === 'SIM' && (
-                  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Nome completo</Label>
-                        <Input
-                          value={formData.relativeName}
-                          onChange={(e) => handleInputChange('relativeName', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Relação</Label>
-                        <Input
-                          value={formData.relativeRelation}
-                          onChange={(e) => handleInputChange('relativeRelation', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Empresa</Label>
-                        <Input
-                          value={formData.relativeCompany}
-                          onChange={(e) => handleInputChange('relativeCompany', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Telefone</Label>
-                        <Input
-                          value={formData.relativePhone}
-                          onChange={(e) => handleInputChange('relativePhone', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+{formData.relativesInUSA === 'SIM' && (
+  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label>Nome completo *</Label>
+        <Input
+          value={formData.relativeName}
+          onChange={(e) => handleInputChange('relativeName', e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Relação *</Label>
+        <Input
+          value={formData.relativeRelation}
+          onChange={(e) => handleInputChange('relativeRelation', e.target.value)}
+          required
+        />
+      </div>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label>Empresa</Label>
+        <Input
+          value={formData.relativeCompany}
+          onChange={(e) => handleInputChange('relativeCompany', e.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Telefone</Label>
+        <Input
+          value={formData.relativePhone}
+          onChange={(e) => handleInputChange('relativePhone', e.target.value)}
+        />
+      </div>
+    </div>
+  </div>
+)}
+n              </div>
 
-              {/* Spouse */}
-              <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-medium text-gray-700">Cônjuge</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Nome completo</Label>
-                    <Input
-                      value={formData.spouseName}
-                      onChange={(e) => handleInputChange('spouseName', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Data de nascimento</Label>
-                    <Input
-                      type="date"
-                      value={formData.spouseBirthDate}
-                      onChange={(e) => handleInputChange('spouseBirthDate', e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Cidade/Estado de nascimento</Label>
-                    <Input
-                      value={formData.spouseBirthCityState}
-                      onChange={(e) => handleInputChange('spouseBirthCityState', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Reside no mesmo endereço?</Label>
-                    <Select
-                      value={formData.spouseSameAddress}
-                      onValueChange={(value) => handleSelectChange('spouseSameAddress', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SIM">SIM</SelectItem>
-                        <SelectItem value="NAO">NÃO</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
+n              {/* Já foi casado - MOVED HERE */}
+n              <div className="space-y-4 pt-4 border-t">
+<div className="space-y-2">
+  <Label>Já foi casado(a)? *</Label>
+  <Select
+    value={formData.wasMarried}
+    onValueChange={(value) => handleSelectChange('wasMarried', value)}
+    required
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Selecione SIM ou NÃO" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="NAO">NÃO</SelectItem>
+      <SelectItem value="SIM">SIM</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
+
+{formData.wasMarried === 'SIM' && (
+  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label>Nome do ex-cônjuge *</Label>
+        <Input
+          value={formData.exSpouseName}
+          onChange={(e) => handleInputChange('exSpouseName', e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Data de nascimento *</Label>
+        <Input
+          type="date"
+          value={formData.exSpouseBirthDate}
+          onChange={(e) => handleInputChange('exSpouseBirthDate', e.target.value)}
+          required
+        />
+      </div>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label>Cidade de Nascimento</Label>
+        <Input
+          value={formData.exSpouseBirthCity}
+          onChange={(e) => handleInputChange('exSpouseBirthCity', e.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Estado de Nascimento</Label>
+        <Input
+          value={formData.exSpouseBirthState}
+          onChange={(e) => handleInputChange('exSpouseBirthState', e.target.value)}
+        />
+      </div>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label>Data do casamento *</Label>
+        <Input
+          type="date"
+          value={formData.marriageDate}
+          onChange={(e) => handleInputChange('marriageDate', e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Data do divórcio *</Label>
+        <Input
+          type="date"
+          value={formData.divorceDate}
+          onChange={(e) => handleInputChange('divorceDate', e.target.value)}
+          required
+        />
+      </div>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label>País do divórcio</Label>
+        <Input
+          value={formData.divorceCountry}
+          onChange={(e) => handleInputChange('divorceCountry', e.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Motivo do divórcio *</Label>
+        <Textarea
+          value={formData.divorceReason}
+          onChange={(e) => handleInputChange('divorceReason', e.target.value)}
+          required
+        />
+      </div>
+    </div>
+  </div>
+)}
+n              </div>
+
+n              {/* Spouse */}
+n              <div className="space-y-4 pt-4 border-t">
+<h4 className="font-medium text-gray-700">Cônjuge</h4>
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div className="space-y-2 md:col-span-2">
+    <Label>Nome completo</Label>
+    <Input
+      value={formData.spouseName}
+      onChange={(e) => handleInputChange('spouseName', e.target.value)}
+    />
+  </div>
+  <div className="space-y-2">
+    <Label>Data de nascimento</Label>
+    <Input
+      type="date"
+      value={formData.spouseBirthDate}
+      onChange={(e) => handleInputChange('spouseBirthDate', e.target.value)}
+    />
+  </div>
+</div>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div className="space-y-2">
+    <Label>Cidade/Estado de nascimento</Label>
+    <Input
+      value={formData.spouseBirthCityState}
+      onChange={(e) => handleInputChange('spouseBirthCityState', e.target.value)}
+    />
+  </div>
+  <div className="space-y-2">
+    <Label>Reside no mesmo endereço?</Label>
+    <Select
+      value={formData.spouseSameAddress}
+      onValueChange={(value) => handleSelectChange('spouseSameAddress', value)}
+    >
+      <SelectTrigger>
+        <SelectValue placeholder="Selecione" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="SIM">SIM</SelectItem>
+        <SelectItem value="NAO">NÃO</SelectItem>
+      </SelectContent>
+    </Select>
+  </div>
+</div>
+n              </div>
 
               {formData.spouseSameAddress === 'NAO' && (
                 <div className="space-y-4 pl-4 border-l-2 border-gray-200">
@@ -2105,72 +2210,6 @@ export default function FormularioPage() {
                   </div>
                 </div>
               )}
-
-              {/* Ex-spouse */}
-              <div className="space-y-4 pt-4 border-t">
-                <div className="space-y-2">
-                  <Label>Já foi casado(a)?</Label>
-                  <Select
-                    value={formData.wasMarried}
-                    onValueChange={(value) => handleSelectChange('wasMarried', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="NAO">NÃO</SelectItem>
-                      <SelectItem value="SIM">SIM</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {formData.wasMarried === 'SIM' && (
-                  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Nome do ex-cônjuge</Label>
-                        <Input
-                          value={formData.exSpouseName}
-                          onChange={(e) => handleInputChange('exSpouseName', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Data de nascimento</Label>
-                        <Input
-                          type="date"
-                          value={formData.exSpouseBirthDate}
-                          onChange={(e) => handleInputChange('exSpouseBirthDate', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Data do casamento</Label>
-                        <Input
-                          type="date"
-                          value={formData.marriageDate}
-                          onChange={(e) => handleInputChange('marriageDate', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Data do divórcio</Label>
-                        <Input
-                          type="date"
-                          value={formData.divorceDate}
-                          onChange={(e) => handleInputChange('divorceDate', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Motivo do divórcio</Label>
-                      <Textarea
-                        value={formData.divorceReason}
-                        onChange={(e) => handleInputChange('divorceReason', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
             </CardContent>
           </Card>
 
@@ -2185,49 +2224,55 @@ export default function FormularioPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Ocupação</Label>
+                  <Label>Ocupação *</Label>
                   <Input
                     value={formData.jobTitle}
                     onChange={(e) => handleInputChange('jobTitle', e.target.value)}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Nome da Empresa/Escola</Label>
+                  <Label>Nome da Empresa/Escola *</Label>
                   <Input
                     value={formData.companyName}
                     onChange={(e) => handleInputChange('companyName', e.target.value)}
+                    required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Endereço</Label>
+                <Label>Endereço *</Label>
                 <Input
                   value={formData.companyAddress}
                   onChange={(e) => handleInputChange('companyAddress', e.target.value)}
+                  required
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>Cidade</Label>
+                  <Label>Cidade *</Label>
                   <Input
                     value={formData.companyCity}
                     onChange={(e) => handleInputChange('companyCity', e.target.value)}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Estado</Label>
+                  <Label>Estado *</Label>
                   <Input
                     value={formData.companyState}
                     onChange={(e) => handleInputChange('companyState', e.target.value)}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>CEP</Label>
+                  <Label>CEP *</Label>
                   <Input
                     value={formData.companyZip}
                     onChange={(e) => handleInputChange('companyZip', e.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -2242,15 +2287,16 @@ export default function FormularioPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Data de início</Label>
+                  <Label>Data de início *</Label>
                   <Input
                     type="date"
                     value={formData.companyStartDate}
                     onChange={(e) => handleInputChange('companyStartDate', e.target.value)}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Remuneração (R$)</Label>
+                  <Label>Remuneração (R$) *</Label>
                   <Input
                     value={formData.companySalary}
                     onChange={(e) => handleInputChange('companySalary', e.target.value)}
@@ -2259,10 +2305,11 @@ export default function FormularioPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Descrição das funções</Label>
+                <Label>Descrição das funções *</Label>
                 <Textarea
                   value={formData.jobDescription}
                   onChange={(e) => handleInputChange('jobDescription', e.target.value)}
+                  required
                 />
               </div>
 
@@ -2370,13 +2417,14 @@ export default function FormularioPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Frequentou escola ou universidade?</Label>
+                <Label>Frequentou escola ou universidade? *</Label>
                 <Select
                   value={formData.hasUniversity}
                   onValueChange={(value) => handleSelectChange('hasUniversity', value)}
+                  required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                    <SelectValue placeholder="Selecione SIM ou NÃO" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="NAO">NÃO</SelectItem>
