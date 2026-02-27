@@ -186,11 +186,24 @@ export default function AdminPage() {
       return;
     }
 
-    // Salvar credenciais do admin para re-login posterior
-    const adminEmail = 'admin@vistoamericano.com';
-    const adminPassword = DEFAULT_PASSWORD;
+    // Salvar dados do admin atual para re-login posterior
+    const currentUser = auth.currentUser;
+    const adminEmail = currentUser?.email;
+
+    if (!adminEmail) {
+      toast.error('Erro: Sessão do admin não encontrada');
+      return;
+    }
+
+    // Pedir confirmação com a senha do admin
+    const adminPassword = prompt('Digite sua senha de administrador para confirmar a operação:');
+    if (!adminPassword) {
+      toast.info('Operação cancelada');
+      return;
+    }
 
     try {
+      toast.loading('Autorizando CPF...');
       const email = `${cleanCPF}@ds160.local`;
 
       // Criar usuário no Firebase Auth
@@ -218,19 +231,29 @@ export default function AdminPage() {
       // Fazer login novamente como admin para restaurar a sessão
       await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
 
+      toast.dismiss();
       toast.success(`CPF autorizado! Senha padrão: ${DEFAULT_PASSWORD}`);
       setNewCPF('');
       loadData();
     } catch (error: unknown) {
+      toast.dismiss();
       console.error('Error authorizing CPF:', error);
       // Tentar restaurar sessão do admin em caso de erro
       try {
         await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
       } catch {
-        // Ignorar erro de re-login
+        toast.error('Erro ao restaurar sessão. Faça login novamente.');
+        router.push('/login');
+        return;
       }
-      if (error instanceof Error && error.message.includes('email-already-in-use')) {
-        toast.error('Este CPF já possui uma conta associada');
+      if (error instanceof Error) {
+        if (error.message.includes('email-already-in-use')) {
+          toast.error('Este CPF já possui uma conta associada');
+        } else if (error.message.includes('weak-password')) {
+          toast.error('Senha muito fraca');
+        } else {
+          toast.error(`Erro: ${error.message}`);
+        }
       } else {
         toast.error('Erro ao autorizar CPF');
       }
@@ -264,11 +287,24 @@ export default function AdminPage() {
   };
 
   const createAccountForCPF = async (cpfData: AuthorizedCPF) => {
-    // Salvar credenciais do admin para re-login posterior
-    const adminEmail = 'admin@vistoamericano.com';
-    const adminPassword = DEFAULT_PASSWORD;
+    // Salvar dados do admin atual para re-login posterior
+    const currentUser = auth.currentUser;
+    const adminEmail = currentUser?.email;
+
+    if (!adminEmail) {
+      toast.error('Erro: Sessão do admin não encontrada');
+      return;
+    }
+
+    // Pedir confirmação com a senha do admin
+    const adminPassword = prompt('Digite sua senha de administrador para confirmar a operação:');
+    if (!adminPassword) {
+      toast.info('Operação cancelada');
+      return;
+    }
 
     try {
+      toast.loading('Criando conta...');
       const email = `${cpfData.cpf}@ds160.local`;
 
       // Criar usuário no Firebase Auth
@@ -294,18 +330,26 @@ export default function AdminPage() {
       // Fazer login novamente como admin para restaurar a sessão
       await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
 
+      toast.dismiss();
       toast.success(`Conta criada! Senha padrão: ${DEFAULT_PASSWORD}`);
       loadData();
     } catch (error: unknown) {
+      toast.dismiss();
       console.error('Error creating account:', error);
       // Tentar restaurar sessão do admin em caso de erro
       try {
         await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
       } catch {
-        // Ignorar erro de re-login
+        toast.error('Erro ao restaurar sessão. Faça login novamente.');
+        router.push('/login');
+        return;
       }
-      if (error instanceof Error && error.message.includes('email-already-in-use')) {
-        toast.error('Este CPF já possui uma conta associada');
+      if (error instanceof Error) {
+        if (error.message.includes('email-already-in-use')) {
+          toast.error('Este CPF já possui uma conta associada');
+        } else {
+          toast.error(`Erro: ${error.message}`);
+        }
       } else {
         toast.error('Erro ao criar conta');
       }
