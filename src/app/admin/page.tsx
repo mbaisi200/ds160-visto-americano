@@ -213,7 +213,6 @@ export default function AdminPage() {
     console.log('=== INICIANDO AUTORIZAÇÃO DE CPF ===');
     console.log('CPF:', cleanCPF);
     console.log('Admin Email:', adminEmail);
-    console.log('CurrentUser UID:', currentUser?.uid);
 
     if (!adminEmail) {
       toast.error('Erro: Sessão do admin não encontrada');
@@ -225,48 +224,102 @@ export default function AdminPage() {
 
     try {
       const email = `${cleanCPF}@ds160.local`;
-      console.log('Email do novo usuário:', email);
+      let userId: string;
 
-      // Criar usuário no Firebase Auth
-      console.log('PASSO 1: Criando usuário no Firebase Auth...');
-      const userCredential = await createUserWithEmailAndPassword(auth, email, DEFAULT_PASSWORD);
-      console.log('PASSO 1 OK - Usuário criado com UID:', userCredential.user.uid);
-
-      // Criar documento do usuário no Firestore
-      console.log('PASSO 2: Criando documento no Firestore (users)...');
-      const userDocRef = doc(db, 'users', userCredential.user.uid);
-      await setDoc(userDocRef, {
-        uid: userCredential.user.uid,
-        email: email,
-        cpf: cleanCPF,
-        role: 'user',
-        createdAt: new Date()
-      });
-      console.log('PASSO 2 OK - Documento users criado');
-
-      // Criar entrada em authorized_cpfs
-      console.log('PASSO 3: Criando documento no Firestore (authorized_cpfs)...');
+      // PASSO 1: Verificar se o CPF já existe no Firestore
+      console.log('PASSO 1: Verificando se CPF já existe no Firestore...');
       const cpfDocRef = doc(db, 'authorized_cpfs', cleanCPF);
+      const existingCpfDoc = await getDoc(cpfDocRef);
+      
+      if (existingCpfDoc.exists()) {
+        console.log('CPF já existe no Firestore!');
+        toast.error('Este CPF já está autorizado no sistema');
+        setIsAuthorizing(false);
+        return;
+      }
+
+      // PASSO 2: Tentar criar usuário no Firebase Auth
+      console.log('PASSO 2: Criando usuário no Firebase Auth...');
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, DEFAULT_PASSWORD);
+        userId = userCredential.user.uid;
+        console.log('PASSO 2 OK - Novo usuário criado com UID:', userId);
+      } catch (createError: unknown) {
+        // Se o email já existe, precisamos recuperar o UID do usuário existente
+        if (createError instanceof Error && createError.message.includes('email-already-in-use')) {
+          console.log('Email já existe no Firebase Auth. Verificando se pertence a este CPF...');
+          
+          // Verificar se existe documento do usuário no Firestore
+          const usersSnapshot = await getDocs(collection(db, 'users'));
+          let existingUserDoc = null;
+          
+          for (const docSnap of usersSnapshot.docs) {
+            const data = docSnap.data();
+            if (data.email === email || data.cpf === cleanCPF) {
+              existingUserDoc = { id: docSnap.id, ...data };
+              break;
+            }
+          }
+          
+          if (existingUserDoc) {
+            userId = existingUserDoc.uid || existingUserDoc.id;
+            console.log('Usuário existente encontrado no Firestore. UID:', userId);
+          } else {
+            // Usuário existe no Auth mas não no Firestore - vamos criar com novo UID simulado
+            // Como não temos Admin SDK, vamos informar o admin
+            console.log('Usuário existe no Auth mas não no Firestore');
+            toast.error('Este CPF já existe no sistema mas está inconsistente. Entre em contato com o suporte.');
+            setIsAuthorizing(false);
+            
+            // Tentar restaurar sessão do admin
+            await signInWithEmailAndPassword(auth, adminEmail, confirmPassword);
+            return;
+          }
+        } else {
+          throw createError;
+        }
+      }
+
+      // PASSO 3: Criar documento do usuário no Firestore (se não existir)
+      console.log('PASSO 3: Criando documento no Firestore (users)...');
+      const userDocRef = doc(db, 'users', userId);
+      const existingUserDoc = await getDoc(userDocRef);
+      
+      if (!existingUserDoc.exists()) {
+        await setDoc(userDocRef, {
+          uid: userId,
+          email: email,
+          cpf: cleanCPF,
+          role: 'user',
+          createdAt: new Date()
+        });
+        console.log('PASSO 3 OK - Documento users criado');
+      } else {
+        console.log('PASSO 3 - Documento users já existe, pulando...');
+      }
+
+      // PASSO 4: Criar entrada em authorized_cpfs
+      console.log('PASSO 4: Criando documento no Firestore (authorized_cpfs)...');
       await setDoc(cpfDocRef, {
         cpf: cleanCPF,
         email: email,
         createdAt: new Date(),
         hasAccount: true,
         blocked: false,
-        userId: userCredential.user.uid
+        userId: userId
       });
-      console.log('PASSO 3 OK - Documento authorized_cpfs criado');
+      console.log('PASSO 4 OK - Documento authorized_cpfs criado');
 
-      // Verificar se foi salvo
-      console.log('PASSO 4: Verificando se foi salvo...');
+      // PASSO 5: Verificar se foi salvo
+      console.log('PASSO 5: Verificando se foi salvo...');
       const verifyDoc = await getDoc(cpfDocRef);
-      console.log('PASSO 4 - Documento existe:', verifyDoc.exists());
-      console.log('PASSO 4 - Dados:', verifyDoc.data());
+      console.log('PASSO 5 - Documento existe:', verifyDoc.exists());
+      console.log('PASSO 5 - Dados:', verifyDoc.data());
 
-      // Fazer login novamente como admin para restaurar a sessão
-      console.log('PASSO 5: Fazendo re-login como admin...');
+      // PASSO 6: Fazer login novamente como admin para restaurar a sessão
+      console.log('PASSO 6: Fazendo re-login como admin...');
       await signInWithEmailAndPassword(auth, adminEmail, confirmPassword);
-      console.log('PASSO 5 OK - Re-login realizado com sucesso');
+      console.log('PASSO 6 OK - Re-login realizado com sucesso');
 
       console.log('=== AUTORIZAÇÃO CONCLUÍDA COM SUCESSO ===');
       
@@ -279,7 +332,6 @@ export default function AdminPage() {
       // Recarregar dados
       console.log('Recarregando lista de CPFs...');
       await loadData();
-      console.log('Lista recarregada. Total de CPFs:', authorizedCPFs.length + 1);
       
     } catch (error: unknown) {
       console.error('=== ERRO AO AUTORIZAR CPF ===');
@@ -299,16 +351,12 @@ export default function AdminPage() {
       }
 
       if (error instanceof Error) {
-        console.error('Tipo do erro:', error.name);
         console.error('Mensagem do erro:', error.message);
         
-        // Mostrar erro específico
         let errorMessage = error.message;
         
         if (error.message.includes('email-already-in-use')) {
           errorMessage = 'Este CPF já possui uma conta associada';
-        } else if (error.message.includes('weak-password')) {
-          errorMessage = 'Senha muito fraca';
         } else if (error.message.includes('permission-denied') || error.message.includes('PERMISSION_DENIED')) {
           errorMessage = 'Erro de permissão no Firebase. Verifique as regras do Firestore.';
         } else if (error.message.includes('invalid-credential') || error.message.includes('wrong-password')) {
@@ -316,10 +364,8 @@ export default function AdminPage() {
         }
         
         toast.error(`Erro: ${errorMessage}`);
-        alert(`ERRO: ${errorMessage}\n\nDetalhes: ${error.message}`);
       } else {
         toast.error('Erro desconhecido ao autorizar CPF');
-        alert('Erro desconhecido ao autorizar CPF');
       }
     }
   };
