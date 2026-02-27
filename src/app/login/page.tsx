@@ -76,7 +76,7 @@ export default function LoginPage() {
   // Mostrar loading enquanto verifica auth
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794]">
         <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
@@ -85,20 +85,20 @@ export default function LoginPage() {
   // Se já logado, não mostrar o form (vai redirecionar)
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794]">
         <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794] p-4">
       <Card className="w-full max-w-md mx-2 sm:mx-0">
         <CardHeader className="text-center px-4 sm:px-6 pt-4 sm:pt-6">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-[#3C3B6E] to-[#B22234] rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
             <span className="text-white font-bold text-lg sm:text-xl">SB</span>
           </div>
-          <CardTitle className="text-xl sm:text-2xl font-bold text-[#3C3B6E]">Acessar Sistema</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-bold text-[#623AA2]">Acessar Sistema</CardTitle>
           <CardDescription className="text-sm">
             Digite seu CPF e senha para acessar o formulário DS160
           </CardDescription>
@@ -156,7 +156,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-[#B22234] hover:bg-[#8b1a28] h-11 sm:h-10"
+              className="w-full bg-[#009639] hover:bg-[#007a2e] h-11 sm:h-10"
               disabled={loading}
             >
               {loading ? (
@@ -176,7 +176,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center text-sm">
             <p className="text-gray-600">
               CPF não autorizado?{' '}
-              <a href="https://wa.me/5511999999999" className="text-[#B22234] hover:underline font-medium">
+              <a href="https://wa.me/5511999999999" className="text-[#623AA2] hover:underline font-medium">
                 Entre em contato
               </a>
             </p>

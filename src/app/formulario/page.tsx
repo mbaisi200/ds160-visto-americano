@@ -962,7 +962,7 @@ export default function FormularioPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-[#B22234] mx-auto" />
+          <Loader2 className="h-12 w-12 animate-spin text-[#623AA2] mx-auto" />
           <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
@@ -971,15 +971,15 @@ export default function FormularioPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] to-[#B22234] p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] to-[#F97794] p-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-6">
             <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-[#3C3B6E] mb-2">Formulário Enviado!</h2>
+            <h2 className="text-2xl font-bold text-[#623AA2] mb-2">Formulário Enviado!</h2>
             <p className="text-gray-600 mb-6">
               Seus dados foram enviados com sucesso. Nossa equipe entrará em contato em breve.
             </p>
-            <Button onClick={handleSignOut} className="w-full bg-[#B22234] hover:bg-[#8b1a28]">
+            <Button onClick={handleSignOut} className="w-full bg-[#009639] hover:bg-[#007a2e]">
               Sair
             </Button>
           </CardContent>
@@ -990,15 +990,15 @@ export default function FormularioPage() {
 
   if (blocked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] to-[#B22234] p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] to-[#F97794] p-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-6">
             <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-[#3C3B6E] mb-2">Acesso Encerrado</h2>
+            <h2 className="text-2xl font-bold text-[#623AA2] mb-2">Acesso Encerrado</h2>
             <p className="text-gray-600 mb-6">
               Seu processo já foi finalizado. Entre em contato com nossa equipe para mais informações.
             </p>
-            <Button onClick={handleSignOut} className="w-full bg-[#B22234] hover:bg-[#8b1a28]">
+            <Button onClick={handleSignOut} className="w-full bg-[#009639] hover:bg-[#007a2e]">
               Sair
             </Button>
           </CardContent>
@@ -1014,11 +1014,11 @@ export default function FormularioPage() {
         <div className="max-w-5xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-[#3C3B6E] to-[#B22234] rounded-full flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-sm sm:text-base">SB</span>
               </div>
               <div>
-                <h1 className="font-bold text-[#3C3B6E] text-sm sm:text-base">Formulário DS160</h1>
+                <h1 className="font-bold text-[#623AA2] text-sm sm:text-base">Formulário DS160</h1>
                 <p className="text-xs text-gray-500 hidden sm:block">Visto Americano</p>
               </div>
             </div>
@@ -1077,7 +1077,7 @@ export default function FormularioPage() {
           {/* Section 0 - Application Location */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <MapPin className="h-5 w-5" />
                 0. Local de Solicitação
               </CardTitle>
@@ -1105,7 +1105,7 @@ export default function FormularioPage() {
           {/* Section 1 - Personal Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <User className="h-5 w-5" />
                 1. Informações Pessoais
               </CardTitle>
@@ -1212,7 +1212,7 @@ export default function FormularioPage() {
           {/* Section 2 - Contact Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Phone className="h-5 w-5" />
                 2. Informações de Contato
               </CardTitle>
@@ -1361,7 +1361,7 @@ export default function FormularioPage() {
           {/* Section 3 - Correspondence Address */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <MapPin className="h-5 w-5" />
                 3. Endereço de Correspondência
               </CardTitle>
@@ -1443,7 +1443,7 @@ export default function FormularioPage() {
           {/* Section 4 - Social Media */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Globe className="h-5 w-5" />
                 4. Redes Sociais
               </CardTitle>
@@ -1512,7 +1512,7 @@ export default function FormularioPage() {
           {/* Section 5 - Passport */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <CreditCard className="h-5 w-5" />
                 5. Passaporte
               </CardTitle>
@@ -1586,7 +1586,7 @@ export default function FormularioPage() {
           {/* Section 6 - Travel */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Plane className="h-5 w-5" />
                 6. Viagem
               </CardTitle>
@@ -1836,7 +1836,7 @@ export default function FormularioPage() {
           {/* Section 7 - Previous Visas */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <FileText className="h-5 w-5" />
                 7. Vistos Anteriores
               </CardTitle>
@@ -1960,7 +1960,7 @@ export default function FormularioPage() {
           {/* Section 8 - Family Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Users className="h-5 w-5" />
                 8. Informações Familiares
               </CardTitle>
@@ -2305,7 +2305,7 @@ export default function FormularioPage() {
           {/* Section 9 - Current Occupation */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Briefcase className="h-5 w-5" />
                 9. Ocupação Atual
               </CardTitle>
@@ -2424,7 +2424,7 @@ export default function FormularioPage() {
           {/* Section 10 - Previous Occupation */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Briefcase className="h-5 w-5" />
                 10. Ocupação Anterior (últimos 5 anos)
               </CardTitle>
@@ -2499,7 +2499,7 @@ export default function FormularioPage() {
           {/* Section 11 - University */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <GraduationCap className="h-5 w-5" />
                 11. Universitário
               </CardTitle>
@@ -2599,7 +2599,7 @@ export default function FormularioPage() {
           {/* Section 12 - International Travel */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Globe className="h-5 w-5" />
                 12. Viagens Internacionais
               </CardTitle>
@@ -2646,7 +2646,7 @@ export default function FormularioPage() {
           {/* Section 13 - I20 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-[#3C3B6E]">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <FileText className="h-5 w-5" />
                 13. Dados do I-20 (Visto de Estudante)
               </CardTitle>
@@ -2745,7 +2745,7 @@ export default function FormularioPage() {
             </Button>
             <Button
               type="submit"
-              className="bg-[#B22234] hover:bg-[#8b1a28] w-full sm:w-auto h-11 sm:h-10"
+              className="bg-[#009639] hover:bg-[#007a2e] w-full sm:w-auto h-11 sm:h-10"
               disabled={submitting}
             >
               {submitting ? (

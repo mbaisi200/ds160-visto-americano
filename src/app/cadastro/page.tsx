@@ -70,13 +70,13 @@ export default function CadastroPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794] p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#3C3B6E] to-[#B22234] rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-white font-bold text-xl">SB</span>
           </div>
-          <CardTitle className="text-2xl font-bold text-[#3C3B6E]">Criar Conta</CardTitle>
+          <CardTitle className="text-2xl font-bold text-[#623AA2]">Criar Conta</CardTitle>
           <CardDescription>
             Cadastre-se para preencher o formulário DS160
           </CardDescription>
@@ -149,7 +149,7 @@ export default function CadastroPage() {
 
             <Button
               type="submit"
-              className="w-full bg-[#B22234] hover:bg-[#8b1a28]"
+              className="w-full bg-[#009639] hover:bg-[#007a2e]"
               disabled={loading}
             >
               {loading ? (
@@ -169,7 +169,7 @@ export default function CadastroPage() {
           <div className="mt-6 text-center text-sm">
             <p className="text-gray-600">
               Já tem uma conta?{' '}
-              <Link href="/login" className="text-[#B22234] hover:underline font-medium">
+              <Link href="/login" className="text-[#623AA2] hover:underline font-medium">
                 Fazer login
               </Link>
             </p>

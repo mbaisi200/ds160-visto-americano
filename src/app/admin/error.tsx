@@ -37,7 +37,7 @@ export default function AdminError({
       <Card className="w-full max-w-md text-center">
         <CardContent className="pt-6">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-[#3C3B6E] mb-2">Erro ao Carregar</h2>
+          <h2 className="text-xl font-bold text-[#623AA2] mb-2">Erro ao Carregar</h2>
           
           {isPermissionError ? (
             <>
@@ -80,7 +80,7 @@ service cloud.firestore {
               <RefreshCw className="h-4 w-4 mr-2" />
               Tentar Novamente
             </Button>
-            <Button onClick={handleLogout} className="bg-[#B22234] hover:bg-[#8b1a28]">
+            <Button onClick={handleLogout} className="bg-[#009639] hover:bg-[#007a2e]">
               <LogOut className="h-4 w-4 mr-2" />
               Sair e Logar Novamente
             </Button>

@@ -614,14 +614,14 @@ export default function AdminPage() {
         <title>DS160 - ${form.cpf}</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-          h1 { color: #3C3B6E; border-bottom: 3px solid #B22234; padding-bottom: 10px; }
-          h2 { color: #3C3B6E; border-bottom: 1px solid #ddd; margin-top: 30px; }
+          h1 { color: #623AA2; border-bottom: 3px solid #F97794; padding-bottom: 10px; }
+          h2 { color: #623AA2; border-bottom: 1px solid #ddd; margin-top: 30px; }
           .info { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
           .field { display: flex; padding: 8px 0; border-bottom: 1px solid #eee; }
           .label { font-weight: bold; width: 200px; color: #666; }
           .value { flex: 1; }
           .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-          .logo { font-size: 24px; font-weight: bold; color: #3C3B6E; }
+          .logo { font-size: 24px; font-weight: bold; color: #623AA2; }
           @media print { body { padding: 20px; } }
         </style>
       </head>
@@ -738,7 +738,7 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-[#B22234] mx-auto" />
+          <Loader2 className="h-12 w-12 animate-spin text-[#623AA2] mx-auto" />
           <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
@@ -751,17 +751,17 @@ export default function AdminPage() {
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-6">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-[#3C3B6E] mb-2">Erro de Permissão</h2>
+            <h2 className="text-xl font-bold text-[#623AA2] mb-2">Erro de Permissão</h2>
             <p className="text-gray-600 mb-4">{errorData}</p>
             <Alert className="mb-4 text-left">
               <AlertDescription className="text-sm">
                 <strong>Como resolver:</strong><br/>
-                1. Acesse o <a href="https://console.firebase.google.com/project/vistoamericano-58f87" target="_blank" className="text-[#B22234] underline">Firebase Console</a><br/>
+                1. Acesse o <a href="https://console.firebase.google.com/project/vistoamericano-58f87" target="_blank" className="text-[#623AA2] underline">Firebase Console</a><br/>
                 2. Vá em Firestore Database → Regras<br/>
                 3. Cole as regras corretas e publique
               </AlertDescription>
             </Alert>
-            <Button onClick={loadData} className="bg-[#B22234] hover:bg-[#8b1a28]">
+            <Button onClick={loadData} className="bg-[#009639] hover:bg-[#007a2e]">
               Tentar Novamente
             </Button>
           </CardContent>
@@ -773,12 +773,12 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-gradient-to-r from-[#3C3B6E] to-[#B22234] text-white shadow-lg">
+      <header className="bg-gradient-to-r from-[#623AA2] to-[#F97794] text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                <span className="text-[#3C3B6E] font-bold">SB</span>
+                <span className="text-[#623AA2] font-bold">SB</span>
               </div>
               <div>
                 <h1 className="text-xl font-bold">Painel Administrativo</h1>
@@ -790,11 +790,11 @@ export default function AdminPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => router.push('/admin/senhas')}
-                className="text-white border-white hover:bg-white hover:text-[#3C3B6E]"
+                className="text-white border-white hover:bg-white hover:text-[#623AA2]"
               >
                 <Key className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Senhas</span>
               </Button>
-              <Button variant="outline" onClick={handleSignOut} className="text-white border-white hover:bg-white hover:text-[#3C3B6E]">
+              <Button variant="outline" onClick={handleSignOut} className="text-white border-white hover:bg-white hover:text-[#623AA2]">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sair
               </Button>
@@ -809,7 +809,7 @@ export default function AdminPage() {
           <div className="flex gap-4">
             <Button
               variant="ghost"
-              className={`border-b-2 ${activeTab === 'formularios' ? 'border-[#B22234] text-[#3C3B6E]' : 'border-transparent text-gray-600 hover:text-[#3C3B6E]'}`}
+              className={`border-b-2 ${activeTab === 'formularios' ? 'border-[#F97794] text-[#623AA2]' : 'border-transparent text-gray-600 hover:text-[#623AA2]'}`}
               onClick={() => setActiveTab('formularios')}
             >
               <FileText className="mr-2 h-4 w-4" />
@@ -817,7 +817,7 @@ export default function AdminPage() {
             </Button>
             <Button
               variant="ghost"
-              className={`border-b-2 ${activeTab === 'cpfs' ? 'border-[#B22234] text-[#3C3B6E]' : 'border-transparent text-gray-600 hover:text-[#3C3B6E]'}`}
+              className={`border-b-2 ${activeTab === 'cpfs' ? 'border-[#F97794] text-[#623AA2]' : 'border-transparent text-gray-600 hover:text-[#623AA2]'}`}
               onClick={() => setActiveTab('cpfs')}
             >
               <Users className="mr-2 h-4 w-4" />
@@ -835,10 +835,10 @@ export default function AdminPage() {
               <CardTitle className="text-sm font-medium text-gray-600">
                 Total Formulários
               </CardTitle>
-              <FileText className="h-5 w-5 text-[#3C3B6E]" />
+              <FileText className="h-5 w-5 text-[#623AA2]" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-[#3C3B6E]">{formularios.length}</div>
+              <div className="text-3xl font-bold text-[#623AA2]">{formularios.length}</div>
               <p className="text-xs text-gray-500 mt-1">Formulários no sistema</p>
             </CardContent>
           </Card>
@@ -874,10 +874,10 @@ export default function AdminPage() {
               <CardTitle className="text-sm font-medium text-gray-600">
                 CPFs Autorizados
               </CardTitle>
-              <Users className="h-5 w-5 text-[#B22234]" />
+              <Users className="h-5 w-5 text-[#F97794]" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-[#B22234]">{authorizedCPFs.length}</div>
+              <div className="text-3xl font-bold text-[#F97794]">{authorizedCPFs.length}</div>
               <p className="text-xs text-gray-500 mt-1">Clientes cadastrados</p>
             </CardContent>
           </Card>
@@ -1042,7 +1042,7 @@ export default function AdminPage() {
                   onChange={(e) => setNewCPF(e.target.value.replace(/\D/g, '').slice(0, 11))}
                   className="w-full sm:max-w-xs h-10 sm:h-9"
                 />
-                <Button onClick={authorizeCPF} className="bg-[#B22234] hover:bg-[#8b1a28] h-10 sm:h-9">
+                <Button onClick={authorizeCPF} className="bg-[#009639] hover:bg-[#007a2e] h-10 sm:h-9">
                   <UserPlus className="h-4 w-4 mr-1" /> Autorizar CPF
                 </Button>
               </div>
@@ -1270,7 +1270,7 @@ export default function AdminPage() {
                   
                   return (
                     <div key={sectionKey} className="border rounded-lg overflow-hidden">
-                      <div className="bg-[#3C3B6E] text-white px-4 py-2 font-semibold text-sm">
+                      <div className="bg-[#623AA2] text-white px-4 py-2 font-semibold text-sm">
                         {sectionLabels[sectionKey]}
                       </div>
                       <div className="divide-y">
@@ -1292,7 +1292,7 @@ export default function AdminPage() {
                   <Button onClick={() => generatePDF(selectedForm)} className="bg-red-600 hover:bg-red-700 w-full sm:w-auto">
                     <FileDown className="h-4 w-4 mr-1" /> Exportar PDF
                   </Button>
-                  <Button onClick={() => generateTXT(selectedForm)} className="bg-[#3C3B6E] w-full sm:w-auto">
+                  <Button onClick={() => generateTXT(selectedForm)} className="bg-[#623AA2] w-full sm:w-auto">
                     <Download className="h-4 w-4 mr-1" /> Baixar TXT
                   </Button>
                 </div>
@@ -1338,7 +1338,7 @@ export default function AdminPage() {
             <Button variant="outline" onClick={() => setShowEditDialog(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={updateCPF} className="bg-[#B22234] hover:bg-[#8b1a28] w-full sm:w-auto">
+            <Button onClick={updateCPF} className="bg-[#009639] hover:bg-[#007a2e] w-full sm:w-auto">
               Salvar Alteração
             </Button>
           </DialogFooter>
@@ -1373,7 +1373,7 @@ export default function AdminPage() {
             <Button variant="outline" onClick={() => setShowPasswordDialog(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={resetPassword} className="bg-[#B22234] hover:bg-[#8b1a28] w-full sm:w-auto">
+            <Button onClick={resetPassword} className="bg-[#009639] hover:bg-[#007a2e] w-full sm:w-auto">
               Alterar Senha
             </Button>
           </DialogFooter>

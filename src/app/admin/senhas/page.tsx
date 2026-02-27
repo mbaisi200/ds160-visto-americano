@@ -179,7 +179,7 @@ export default function AdminSenhasPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-[#B22234] mx-auto" />
+          <Loader2 className="h-12 w-12 animate-spin text-[#623AA2] mx-auto" />
           <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
@@ -193,11 +193,11 @@ export default function AdminSenhasPage() {
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-[#3C3B6E] to-[#B22234] rounded-full flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center">
                 <Key className="text-white h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div>
-                <h1 className="font-bold text-[#3C3B6E] text-sm sm:text-base">Gerenciar Senhas</h1>
+                <h1 className="font-bold text-[#623AA2] text-sm sm:text-base">Gerenciar Senhas</h1>
                 <p className="text-xs text-gray-500 hidden sm:block">Administração de acesso</p>
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function AdminSenhasPage() {
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-[#3C3B6E]" />
+              <Shield className="h-5 w-5 text-[#623AA2]" />
               <CardTitle className="text-lg">Senha do Administrador</CardTitle>
             </div>
             <CardDescription>
@@ -278,7 +278,7 @@ export default function AdminSenhasPage() {
                   <Button
                     onClick={handleResetAdminPassword}
                     disabled={actionLoading || !adminStatus?.adminConfigured}
-                    className="bg-[#B22234] hover:bg-[#8b1a28] w-full sm:w-auto"
+                    className="bg-[#009639] hover:bg-[#007a2e] w-full sm:w-auto"
                   >
                     {actionLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -310,7 +310,7 @@ export default function AdminSenhasPage() {
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-[#3C3B6E]" />
+              <Users className="h-5 w-5 text-[#623AA2]" />
               <CardTitle className="text-lg">Redefinir Senha de Usuário</CardTitle>
             </div>
             <CardDescription>
@@ -347,7 +347,7 @@ export default function AdminSenhasPage() {
               <Button
                 onClick={handleResetUserPassword}
                 disabled={actionLoading || !adminStatus?.adminConfigured}
-                className="bg-[#3C3B6E] hover:bg-[#2a2a52]"
+                className="bg-[#623AA2] hover:bg-[#4a2d82]"
               >
                 {actionLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -368,7 +368,7 @@ export default function AdminSenhasPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-[#3C3B6E]" />
+                  <Users className="h-5 w-5 text-[#623AA2]" />
                   <CardTitle className="text-lg">Usuários Cadastrados</CardTitle>
                 </div>
                 <Button variant="outline" size="sm" onClick={fetchAdminStatus}>

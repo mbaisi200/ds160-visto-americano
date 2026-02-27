@@ -40,7 +40,7 @@ export default function HomePage() {
   // Mostrar loading enquanto verifica auth
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794]">
         <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
@@ -49,21 +49,21 @@ export default function HomePage() {
   // Se já logado, mostrar loading (vai redirecionar)
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794]">
         <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234]">
+    <div className="min-h-screen bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794]">
       {/* Header */}
       <header className="bg-white/10 backdrop-blur-sm border-b border-white/20">
         <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-[#3C3B6E] font-bold text-sm sm:text-lg">SB</span>
+                <span className="text-[#623AA2] font-bold text-sm sm:text-lg">SB</span>
               </div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-white">SB Viagens e Turismo</h1>
@@ -71,7 +71,7 @@ export default function HomePage() {
               </div>
             </div>
             <Link href="/login">
-              <Button className="bg-[#B22234] text-white hover:bg-[#8b1a28] font-semibold text-sm sm:text-base h-10 sm:h-auto px-4 sm:px-6">
+              <Button className="bg-[#009639] text-white hover:bg-[#007a2e] font-semibold text-sm sm:text-base h-10 sm:h-auto px-4 sm:px-6">
                 <span className="hidden sm:inline">Acessar Sistema</span>
                 <span className="sm:hidden">Acessar</span>
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -99,7 +99,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
             <Link href="/login">
-              <Button size="lg" className="bg-[#B22234] hover:bg-[#8b1a28] text-white px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg w-full sm:w-auto">
+              <Button size="lg" className="bg-[#009639] hover:bg-[#007a2e] text-white px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg w-full sm:w-auto">
                 Iniciar Formulário
                 <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
               </Button>
@@ -112,46 +112,46 @@ export default function HomePage() {
       <section className="bg-white py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#3C3B6E] mb-3 sm:mb-4">Como Funciona</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#623AA2] mb-3 sm:mb-4">Como Funciona</h2>
             <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto px-4">
               Processo simples para você obter seu visto americano
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-            <Card className="border-2 border-transparent hover:border-[#B22234] transition-all">
+            <Card className="border-2 border-transparent hover:border-[#623AA2] transition-all">
               <CardContent className="pt-6 sm:pt-8 text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#3C3B6E] rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <Users className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
-                <div className="text-3xl sm:text-4xl font-bold text-[#B22234] mb-2">1</div>
-                <h3 className="text-lg sm:text-xl font-semibold text-[#3C3B6E] mb-2">Cadastro</h3>
+                <div className="text-3xl sm:text-4xl font-bold text-[#009639] mb-2">1</div>
+                <h3 className="text-lg sm:text-xl font-semibold text-[#623AA2] mb-2">Cadastro</h3>
                 <p className="text-sm sm:text-base text-gray-600">
                   Entre em contato conosco para cadastrar seu CPF no sistema
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-transparent hover:border-[#B22234] transition-all">
+            <Card className="border-2 border-transparent hover:border-[#623AA2] transition-all">
               <CardContent className="pt-6 sm:pt-8 text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#B22234] rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#F97794] to-[#623AA2] rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
-                <div className="text-3xl sm:text-4xl font-bold text-[#B22234] mb-2">2</div>
-                <h3 className="text-lg sm:text-xl font-semibold text-[#3C3B6E] mb-2">Formulário DS160</h3>
+                <div className="text-3xl sm:text-4xl font-bold text-[#009639] mb-2">2</div>
+                <h3 className="text-lg sm:text-xl font-semibold text-[#623AA2] mb-2">Formulário DS160</h3>
                 <p className="text-sm sm:text-base text-gray-600">
                   Preencha seus dados online com CPF e senha fornecidos
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-transparent hover:border-[#B22234] transition-all">
+            <Card className="border-2 border-transparent hover:border-[#623AA2] transition-all">
               <CardContent className="pt-6 sm:pt-8 text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#ffd700] rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <Plane className="h-6 w-6 sm:h-8 sm:w-8 text-[#3C3B6E]" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#009639] rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Plane className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
-                <div className="text-3xl sm:text-4xl font-bold text-[#B22234] mb-2">3</div>
-                <h3 className="text-lg sm:text-xl font-semibold text-[#3C3B6E] mb-2">Entrevista</h3>
+                <div className="text-3xl sm:text-4xl font-bold text-[#009639] mb-2">3</div>
+                <h3 className="text-lg sm:text-xl font-semibold text-[#623AA2] mb-2">Entrevista</h3>
                 <p className="text-sm sm:text-base text-gray-600">
                   Agendamos sua entrevista no consulado e orientamos sobre o processo
                 </p>
@@ -165,7 +165,7 @@ export default function HomePage() {
       <section className="bg-gray-50 py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#3C3B6E] mb-3 sm:mb-4">Documentos Necessários</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#623AA2] mb-3 sm:mb-4">Documentos Necessários</h2>
             <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto px-4">
               Tenha em mãos os seguintes documentos para agilizar seu processo
             </p>
@@ -175,8 +175,8 @@ export default function HomePage() {
             <Card className="bg-white">
               <CardContent className="pt-4 sm:pt-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#B22234] flex-shrink-0" />
-                  <h3 className="font-semibold text-[#3C3B6E] text-sm sm:text-base">Passaporte</h3>
+                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#009639] flex-shrink-0" />
+                  <h3 className="font-semibold text-[#623AA2] text-sm sm:text-base">Passaporte</h3>
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600 ml-8 sm:ml-9">
                   Passaporte brasileiro válido
@@ -187,8 +187,8 @@ export default function HomePage() {
             <Card className="bg-white">
               <CardContent className="pt-4 sm:pt-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#B22234] flex-shrink-0" />
-                  <h3 className="font-semibold text-[#3C3B6E] text-sm sm:text-base">Foto 5x5cm</h3>
+                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#009639] flex-shrink-0" />
+                  <h3 className="font-semibold text-[#623AA2] text-sm sm:text-base">Foto 5x5cm</h3>
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600 ml-8 sm:ml-9">
                   Foto recente com fundo branco
@@ -199,8 +199,8 @@ export default function HomePage() {
             <Card className="bg-white">
               <CardContent className="pt-4 sm:pt-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#B22234] flex-shrink-0" />
-                  <h3 className="font-semibold text-[#3C3B6E] text-sm sm:text-base">RG e CPF</h3>
+                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#009639] flex-shrink-0" />
+                  <h3 className="font-semibold text-[#623AA2] text-sm sm:text-base">RG e CPF</h3>
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600 ml-8 sm:ml-9">
                   Documentos de identificação
@@ -211,8 +211,8 @@ export default function HomePage() {
             <Card className="bg-white">
               <CardContent className="pt-4 sm:pt-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#B22234] flex-shrink-0" />
-                  <h3 className="font-semibold text-[#3C3B6E] text-sm sm:text-base">Comprovantes</h3>
+                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#009639] flex-shrink-0" />
+                  <h3 className="font-semibold text-[#623AA2] text-sm sm:text-base">Comprovantes</h3>
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600 ml-8 sm:ml-9">
                   Residência, renda e vínculos
@@ -224,7 +224,7 @@ export default function HomePage() {
       </section>
 
       {/* Benefits */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-[#3C3B6E]">
+      <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-[#623AA2] to-[#F97794]">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">Por que nos escolher?</h2>
@@ -259,14 +259,14 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 sm:py-16 bg-[#B22234]">
+      <section className="py-12 sm:py-16 bg-[#009639]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Pronto para começar?</h2>
           <p className="text-base sm:text-lg text-white/80 mb-6 sm:mb-8">
             Entre em contato conosco para autorizar seu CPF e iniciar o processo de visto americano.
           </p>
           <Link href="/login">
-            <Button size="lg" className="bg-white text-[#B22234] hover:bg-gray-100 px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg">
+            <Button size="lg" className="bg-white text-[#009639] hover:bg-gray-100 px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg">
               Acessar Sistema
               <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
             </Button>
@@ -275,11 +275,11 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#1a1a3e] text-white py-8">
+      <footer className="bg-[#002776] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-              <span className="text-[#3C3B6E] font-bold text-sm">SB</span>
+              <span className="text-[#623AA2] font-bold text-sm">SB</span>
             </div>
             <span className="font-semibold">SB Viagens e Turismo</span>
           </div>

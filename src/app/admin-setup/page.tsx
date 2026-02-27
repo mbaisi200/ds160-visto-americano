@@ -80,15 +80,15 @@ export default function AdminSetupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234] p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794] p-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-6">
             <Shield className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-[#3C3B6E] mb-2">Admin Criado!</h2>
+            <h2 className="text-2xl font-bold text-[#623AA2] mb-2">Admin Criado!</h2>
             <p className="text-gray-600 mb-4">
               Conta de administrador criada com sucesso. Redirecionando...
             </p>
-            <Loader2 className="h-6 w-6 animate-spin mx-auto text-[#B22234]" />
+            <Loader2 className="h-6 w-6 animate-spin mx-auto text-[#623AA2]" />
           </CardContent>
         </Card>
       </div>
@@ -97,15 +97,15 @@ export default function AdminSetupPage() {
 
   if (resetSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234] p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794] p-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-6">
             <Mail className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-[#3C3B6E] mb-2">Email Enviado!</h2>
+            <h2 className="text-2xl font-bold text-[#623AA2] mb-2">Email Enviado!</h2>
             <p className="text-gray-600 mb-4">
               Verifique sua caixa de entrada em <strong>admin@vistoamericano.com</strong> para redefinir a senha.
             </p>
-            <Button onClick={() => router.push('/login')} className="bg-[#B22234] hover:bg-[#8b1a28]">
+            <Button onClick={() => router.push('/login')} className="bg-[#009639] hover:bg-[#007a2e]">
               Ir para Login
             </Button>
           </CardContent>
@@ -115,13 +115,13 @@ export default function AdminSetupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3B6E] via-[#1a1a3e] to-[#B22234] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794] p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#3C3B6E] to-[#B22234] rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center mx-auto mb-4">
             <Shield className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold text-[#3C3B6E]">Configuração Admin</CardTitle>
+          <CardTitle className="text-2xl font-bold text-[#623AA2]">Configuração Admin</CardTitle>
           <CardDescription>
             {resetMode ? 'Redefina a senha do administrador' : 'Crie a senha do administrador do sistema'}
           </CardDescription>
@@ -148,7 +148,7 @@ export default function AdminSetupPage() {
               </p>
               <Button
                 onClick={handleResetPassword}
-                className="w-full bg-[#B22234] hover:bg-[#8b1a28]"
+                className="w-full bg-[#009639] hover:bg-[#007a2e]"
                 disabled={loading}
               >
                 {loading ? (
@@ -199,7 +199,7 @@ export default function AdminSetupPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-[#B22234] hover:bg-[#8b1a28]"
+                className="w-full bg-[#009639] hover:bg-[#007a2e]"
                 disabled={loading}
               >
                 {loading ? (
