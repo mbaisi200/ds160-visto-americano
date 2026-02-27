@@ -136,6 +136,160 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      case 'create-cpf-user': {
+        // Esta action cria um usuário para CPF sem afetar a sessão do admin
+        // Usa Firebase Admin SDK que não faz login automático
+        const { adminDb } = await import('@/lib/firebase-admin');
+
+        if (!adminDb) {
+          return NextResponse.json({ success: false, error: 'Firebase Admin DB não inicializado' }, { status: 400 });
+        }
+
+        const cpf = body.cpf;
+        if (!cpf || cpf.replace(/\D/g, '').length !== 11) {
+          return NextResponse.json({ success: false, error: 'CPF inválido' }, { status: 400 });
+        }
+
+        const cleanCPF = cpf.replace(/\D/g, '');
+        const userEmail = `${cleanCPF}@ds160.local`;
+        const userPassword = password || '123456';
+
+        try {
+          // Verificar se o CPF já existe na coleção authorized_cpfs
+          const cpfDocRef = adminDb.collection('authorized_cpfs').doc(cleanCPF);
+          const cpfDoc = await cpfDocRef.get();
+
+          if (cpfDoc.exists) {
+            return NextResponse.json({ success: false, error: 'Este CPF já está autorizado' }, { status: 400 });
+          }
+
+          // Criar usuário no Firebase Auth
+          const userRecord = await adminAuth.createUser({
+            email: userEmail,
+            password: userPassword,
+            emailVerified: true,
+          });
+
+          // Criar documento do usuário no Firestore
+          const usersDocRef = adminDb.collection('users').doc(userRecord.uid);
+          await usersDocRef.set({
+            uid: userRecord.uid,
+            email: userEmail,
+            cpf: cleanCPF,
+            role: 'user',
+            createdAt: new Date()
+          });
+
+          // Criar entrada em authorized_cpfs
+          await cpfDocRef.set({
+            cpf: cleanCPF,
+            email: userEmail,
+            createdAt: new Date(),
+            hasAccount: true,
+            blocked: false,
+            userId: userRecord.uid
+          });
+
+          return NextResponse.json({
+            success: true,
+            message: 'CPF autorizado com sucesso',
+            cpf: cleanCPF,
+            email: userEmail,
+            password: userPassword,
+            uid: userRecord.uid
+          });
+        } catch (error: unknown) {
+          console.error('Error creating CPF user:', error);
+          if (error instanceof Error && error.message.includes('email-already-in-use')) {
+            return NextResponse.json({ success: false, error: 'Este CPF já possui uma conta associada' }, { status: 400 });
+          }
+          return NextResponse.json({
+            success: false,
+            error: 'Erro ao criar usuário',
+            details: error instanceof Error ? error.message : 'Unknown error'
+          }, { status: 500 });
+        }
+      }
+
+      case 'create-account-for-cpf': {
+        // Esta action cria uma conta para um CPF que já está autorizado mas não tem conta
+        // Usa Firebase Admin SDK que não faz login automático
+        const { adminDb } = await import('@/lib/firebase-admin');
+
+        if (!adminDb) {
+          return NextResponse.json({ success: false, error: 'Firebase Admin DB não inicializado' }, { status: 400 });
+        }
+
+        const cpf = body.cpf;
+        if (!cpf || cpf.replace(/\D/g, '').length !== 11) {
+          return NextResponse.json({ success: false, error: 'CPF inválido' }, { status: 400 });
+        }
+
+        const cleanCPF = cpf.replace(/\D/g, '');
+        const userEmail = `${cleanCPF}@ds160.local`;
+        const userPassword = password || '123456';
+
+        try {
+          // Verificar se o CPF existe na coleção authorized_cpfs
+          const cpfDocRef = adminDb.collection('authorized_cpfs').doc(cleanCPF);
+          const cpfDoc = await cpfDocRef.get();
+
+          if (!cpfDoc.exists) {
+            return NextResponse.json({ success: false, error: 'CPF não encontrado na lista de autorizados' }, { status: 404 });
+          }
+
+          // Verificar se já tem conta
+          const cpfData = cpfDoc.data();
+          if (cpfData?.hasAccount) {
+            return NextResponse.json({ success: false, error: 'Este CPF já possui uma conta' }, { status: 400 });
+          }
+
+          // Criar usuário no Firebase Auth
+          const userRecord = await adminAuth.createUser({
+            email: userEmail,
+            password: userPassword,
+            emailVerified: true,
+          });
+
+          // Criar documento do usuário no Firestore
+          const usersDocRef = adminDb.collection('users').doc(userRecord.uid);
+          await usersDocRef.set({
+            uid: userRecord.uid,
+            email: userEmail,
+            cpf: cleanCPF,
+            role: 'user',
+            createdAt: new Date()
+          });
+
+          // Atualizar entrada em authorized_cpfs
+          await cpfDocRef.update({
+            email: userEmail,
+            hasAccount: true,
+            blocked: false,
+            userId: userRecord.uid
+          });
+
+          return NextResponse.json({
+            success: true,
+            message: 'Conta criada com sucesso',
+            cpf: cleanCPF,
+            email: userEmail,
+            password: userPassword,
+            uid: userRecord.uid
+          });
+        } catch (error: unknown) {
+          console.error('Error creating account for CPF:', error);
+          if (error instanceof Error && error.message.includes('email-already-in-use')) {
+            return NextResponse.json({ success: false, error: 'Este CPF já possui uma conta associada' }, { status: 400 });
+          }
+          return NextResponse.json({
+            success: false,
+            error: 'Erro ao criar conta',
+            details: error instanceof Error ? error.message : 'Unknown error'
+          }, { status: 500 });
+        }
+      }
+
       default:
         return NextResponse.json({ success: false, error: 'Ação inválida' }, { status: 400 });
     }

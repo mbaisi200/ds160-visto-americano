@@ -32,8 +32,7 @@ import {
   deleteDoc,
   getDoc
 } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import {
   Users,
   FileText,
@@ -179,49 +178,33 @@ export default function AdminPage() {
 
     const cleanCPF = newCPF.replace(/\D/g, '');
 
-    // Check if already exists
-    const existingDoc = await getDoc(doc(db, 'authorized_cpfs', cleanCPF));
-    if (existingDoc.exists()) {
-      toast.error('Este CPF já está autorizado');
-      return;
-    }
-
     try {
-      // Create email based on CPF
-      const email = `${cleanCPF}@ds160.local`;
-
-      // Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, DEFAULT_PASSWORD);
-      
-      // Create user document in Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        email: email,
-        cpf: cleanCPF,
-        role: 'user',
-        createdAt: new Date()
+      // Usar API backend com Firebase Admin SDK para não afetar a sessão do admin
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'create-cpf-user',
+          cpf: cleanCPF,
+          password: DEFAULT_PASSWORD,
+        }),
       });
 
-      // Create authorized_cpfs entry
-      await setDoc(doc(db, 'authorized_cpfs', cleanCPF), {
-        cpf: cleanCPF,
-        email: email,
-        createdAt: new Date(),
-        hasAccount: true,
-        blocked: false,
-        userId: userCredential.user.uid
-      });
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        toast.error(data.error || 'Erro ao autorizar CPF');
+        return;
+      }
 
       toast.success(`CPF autorizado! Senha padrão: ${DEFAULT_PASSWORD}`);
       setNewCPF('');
       loadData();
     } catch (error: unknown) {
       console.error('Error authorizing CPF:', error);
-      if (error instanceof Error && error.message.includes('email-already-in-use')) {
-        toast.error('Este CPF já possui uma conta associada');
-      } else {
-        toast.error('Erro ao autorizar CPF');
-      }
+      toast.error('Erro ao autorizar CPF');
     }
   };
 
@@ -253,38 +236,31 @@ export default function AdminPage() {
 
   const createAccountForCPF = async (cpfData: AuthorizedCPF) => {
     try {
-      // Create email based on CPF
-      const email = `${cpfData.cpf}@ds160.local`;
-
-      // Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, DEFAULT_PASSWORD);
-
-      // Create user document in Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        email: email,
-        cpf: cpfData.cpf,
-        role: 'user',
-        createdAt: new Date()
+      // Usar API backend com Firebase Admin SDK para não afetar a sessão do admin
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'create-account-for-cpf',
+          cpf: cpfData.cpf,
+          password: DEFAULT_PASSWORD,
+        }),
       });
 
-      // Update authorized_cpfs entry
-      await updateDoc(doc(db, 'authorized_cpfs', cpfData.cpf), {
-        email: email,
-        hasAccount: true,
-        blocked: false,
-        userId: userCredential.user.uid
-      });
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        toast.error(data.error || 'Erro ao criar conta');
+        return;
+      }
 
       toast.success(`Conta criada! Senha padrão: ${DEFAULT_PASSWORD}`);
       loadData();
     } catch (error: unknown) {
       console.error('Error creating account:', error);
-      if (error instanceof Error && error.message.includes('email-already-in-use')) {
-        toast.error('Este CPF já possui uma conta associada');
-      } else {
-        toast.error('Erro ao criar conta');
-      }
+      toast.error('Erro ao criar conta');
     }
   };
 
