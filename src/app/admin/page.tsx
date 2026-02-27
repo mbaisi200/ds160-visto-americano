@@ -32,8 +32,7 @@ import {
   deleteDoc,
   getDoc
 } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { db } from '@/lib/firebase';
 import {
   Users,
   FileText,
@@ -91,9 +90,6 @@ export default function AdminPage() {
   const [showDialog, setShowDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [showConfirmPasswordDialog, setShowConfirmPasswordDialog] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [editingCPF, setEditingCPF] = useState<AuthorizedCPF | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [newCPFValue, setNewCPFValue] = useState('');
@@ -101,6 +97,7 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
   const [periodFilter, setPeriodFilter] = useState('todos');
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
 
   useEffect(() => {
     const initAdmin = async () => {
@@ -174,6 +171,9 @@ export default function AdminPage() {
     router.push('/');
   };
 
+  // Firebase API Key para REST API
+  const FIREBASE_API_KEY = "AIzaSyBEZVEFsQloinsGu6G0-Dx8j4FFgga4foA";
+
   const authorizeCPF = async () => {
     if (!newCPF || newCPF.replace(/\D/g, '').length !== 11) {
       toast.error('CPF inválido. Digite 11 números.');
@@ -182,7 +182,7 @@ export default function AdminPage() {
 
     const cleanCPF = newCPF.replace(/\D/g, '');
 
-    // Check if already exists
+    // Check if already exists in Firestore
     try {
       const existingDoc = await getDoc(doc(db, 'authorized_cpfs', cleanCPF));
       if (existingDoc.exists()) {
@@ -195,177 +195,76 @@ export default function AdminPage() {
       return;
     }
 
-    // Abrir dialog para confirmar senha
-    setConfirmPassword('');
-    setShowConfirmPasswordDialog(true);
-  };
-
-  const confirmAuthorizeCPF = async () => {
-    if (!confirmPassword) {
-      toast.error('Digite sua senha');
-      return;
-    }
-
-    const cleanCPF = newCPF.replace(/\D/g, '');
-    const currentUser = auth.currentUser;
-    const adminEmail = currentUser?.email;
-
-    console.log('=== INICIANDO AUTORIZAÇÃO DE CPF ===');
-    console.log('CPF:', cleanCPF);
-    console.log('Admin Email:', adminEmail);
-
-    if (!adminEmail) {
-      toast.error('Erro: Sessão do admin não encontrada');
-      setShowConfirmPasswordDialog(false);
-      return;
-    }
-
     setIsAuthorizing(true);
 
     try {
       const email = `${cleanCPF}@ds160.local`;
-      let userId: string;
 
-      // PASSO 1: Verificar se o CPF já existe no Firestore
-      console.log('PASSO 1: Verificando se CPF já existe no Firestore...');
-      const cpfDocRef = doc(db, 'authorized_cpfs', cleanCPF);
-      const existingCpfDoc = await getDoc(cpfDocRef);
-      
-      if (existingCpfDoc.exists()) {
-        console.log('CPF já existe no Firestore!');
-        toast.error('Este CPF já está autorizado no sistema');
+      // Usar Firebase REST API para criar usuário sem afetar a sessão do admin
+      console.log('Criando usuário via REST API...');
+      const response = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password: DEFAULT_PASSWORD,
+            returnSecureToken: false, // Importante: não retorna token, não afeta sessão
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Erro da API:', errorData);
+        
+        if (errorData.error?.message === 'EMAIL_EXISTS') {
+          toast.error('Este CPF já possui uma conta associada');
+        } else {
+          toast.error(`Erro ao criar usuário: ${errorData.error?.message || 'Erro desconhecido'}`);
+        }
         setIsAuthorizing(false);
         return;
       }
 
-      // PASSO 2: Tentar criar usuário no Firebase Auth
-      console.log('PASSO 2: Criando usuário no Firebase Auth...');
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, DEFAULT_PASSWORD);
-        userId = userCredential.user.uid;
-        console.log('PASSO 2 OK - Novo usuário criado com UID:', userId);
-      } catch (createError: unknown) {
-        // Se o email já existe, precisamos recuperar o UID do usuário existente
-        if (createError instanceof Error && createError.message.includes('email-already-in-use')) {
-          console.log('Email já existe no Firebase Auth. Verificando se pertence a este CPF...');
-          
-          // Verificar se existe documento do usuário no Firestore
-          const usersSnapshot = await getDocs(collection(db, 'users'));
-          let existingUserDoc = null;
-          
-          for (const docSnap of usersSnapshot.docs) {
-            const data = docSnap.data();
-            if (data.email === email || data.cpf === cleanCPF) {
-              existingUserDoc = { id: docSnap.id, ...data };
-              break;
-            }
-          }
-          
-          if (existingUserDoc) {
-            userId = existingUserDoc.uid || existingUserDoc.id;
-            console.log('Usuário existente encontrado no Firestore. UID:', userId);
-          } else {
-            // Usuário existe no Auth mas não no Firestore - vamos criar com novo UID simulado
-            // Como não temos Admin SDK, vamos informar o admin
-            console.log('Usuário existe no Auth mas não no Firestore');
-            toast.error('Este CPF já existe no sistema mas está inconsistente. Entre em contato com o suporte.');
-            setIsAuthorizing(false);
-            
-            // Tentar restaurar sessão do admin
-            await signInWithEmailAndPassword(auth, adminEmail, confirmPassword);
-            return;
-          }
-        } else {
-          throw createError;
-        }
-      }
+      const userData = await response.json();
+      const newUserId = userData.localId;
+      console.log('Usuário criado com UID:', newUserId);
 
-      // PASSO 3: Criar documento do usuário no Firestore (se não existir)
-      console.log('PASSO 3: Criando documento no Firestore (users)...');
-      const userDocRef = doc(db, 'users', userId);
-      const existingUserDoc = await getDoc(userDocRef);
-      
-      if (!existingUserDoc.exists()) {
-        await setDoc(userDocRef, {
-          uid: userId,
-          email: email,
-          cpf: cleanCPF,
-          role: 'user',
-          createdAt: new Date()
-        });
-        console.log('PASSO 3 OK - Documento users criado');
-      } else {
-        console.log('PASSO 3 - Documento users já existe, pulando...');
-      }
+      // Criar documento do usuário no Firestore
+      await setDoc(doc(db, 'users', newUserId), {
+        uid: newUserId,
+        email: email,
+        cpf: cleanCPF,
+        role: 'user',
+        createdAt: new Date()
+      });
 
-      // PASSO 4: Criar entrada em authorized_cpfs
-      console.log('PASSO 4: Criando documento no Firestore (authorized_cpfs)...');
-      await setDoc(cpfDocRef, {
+      // Criar entrada em authorized_cpfs
+      await setDoc(doc(db, 'authorized_cpfs', cleanCPF), {
         cpf: cleanCPF,
         email: email,
         createdAt: new Date(),
         hasAccount: true,
         blocked: false,
-        userId: userId
+        userId: newUserId,
+        addedBy: user?.uid
       });
-      console.log('PASSO 4 OK - Documento authorized_cpfs criado');
 
-      // PASSO 5: Verificar se foi salvo
-      console.log('PASSO 5: Verificando se foi salvo...');
-      const verifyDoc = await getDoc(cpfDocRef);
-      console.log('PASSO 5 - Documento existe:', verifyDoc.exists());
-      console.log('PASSO 5 - Dados:', verifyDoc.data());
-
-      // PASSO 6: Fazer login novamente como admin para restaurar a sessão
-      console.log('PASSO 6: Fazendo re-login como admin...');
-      await signInWithEmailAndPassword(auth, adminEmail, confirmPassword);
-      console.log('PASSO 6 OK - Re-login realizado com sucesso');
-
-      console.log('=== AUTORIZAÇÃO CONCLUÍDA COM SUCESSO ===');
-      
-      setShowConfirmPasswordDialog(false);
-      toast.success(`CPF autorizado! Senha padrão: ${DEFAULT_PASSWORD}`);
+      toast.success(`CPF autorizado! Login: ${email} | Senha: ${DEFAULT_PASSWORD}`);
       setNewCPF('');
-      setConfirmPassword('');
       setIsAuthorizing(false);
-      
-      // Recarregar dados
-      console.log('Recarregando lista de CPFs...');
-      await loadData();
+      loadData();
       
     } catch (error: unknown) {
-      console.error('=== ERRO AO AUTORIZAR CPF ===');
-      console.error('Erro completo:', error);
+      console.error('Erro ao autorizar CPF:', error);
       setIsAuthorizing(false);
       
-      // Tentar restaurar sessão do admin
-      try {
-        await signInWithEmailAndPassword(auth, adminEmail, confirmPassword);
-        console.log('Sessão do admin restaurada');
-      } catch (restoreError) {
-        console.error('Erro ao restaurar sessão:', restoreError);
-        toast.error('Erro ao restaurar sessão. Faça login novamente.');
-        setShowConfirmPasswordDialog(false);
-        router.push('/login');
-        return;
-      }
-
       if (error instanceof Error) {
-        console.error('Mensagem do erro:', error.message);
-        
-        let errorMessage = error.message;
-        
-        if (error.message.includes('email-already-in-use')) {
-          errorMessage = 'Este CPF já possui uma conta associada';
-        } else if (error.message.includes('permission-denied') || error.message.includes('PERMISSION_DENIED')) {
-          errorMessage = 'Erro de permissão no Firebase. Verifique as regras do Firestore.';
-        } else if (error.message.includes('invalid-credential') || error.message.includes('wrong-password')) {
-          errorMessage = 'Senha de admin incorreta';
-        }
-        
-        toast.error(`Erro: ${errorMessage}`);
+        toast.error(`Erro: ${error.message}`);
       } else {
-        toast.error('Erro desconhecido ao autorizar CPF');
+        toast.error('Erro ao autorizar CPF');
       }
     }
   };
@@ -397,32 +296,39 @@ export default function AdminPage() {
   };
 
   const createAccountForCPF = async (cpfData: AuthorizedCPF) => {
-    // Salvar dados do admin atual para re-login posterior
-    const currentUser = auth.currentUser;
-    const adminEmail = currentUser?.email;
-
-    if (!adminEmail) {
-      toast.error('Erro: Sessão do admin não encontrada');
-      return;
-    }
-
-    // Pedir confirmação com a senha do admin
-    const adminPassword = prompt('Digite sua senha de administrador para confirmar a operação:');
-    if (!adminPassword) {
-      toast.info('Operação cancelada');
-      return;
-    }
-
     try {
-      toast.loading('Criando conta...');
       const email = `${cpfData.cpf}@ds160.local`;
 
-      // Criar usuário no Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, DEFAULT_PASSWORD);
+      // Usar Firebase REST API para criar usuário sem afetar a sessão do admin
+      const response = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password: DEFAULT_PASSWORD,
+            returnSecureToken: false,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.error?.message === 'EMAIL_EXISTS') {
+          toast.error('Este CPF já possui uma conta associada');
+        } else {
+          toast.error(`Erro: ${errorData.error?.message || 'Erro desconhecido'}`);
+        }
+        return;
+      }
+
+      const userData = await response.json();
+      const newUserId = userData.localId;
 
       // Criar documento do usuário no Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        uid: userCredential.user.uid,
+      await setDoc(doc(db, 'users', newUserId), {
+        uid: newUserId,
         email: email,
         cpf: cpfData.cpf,
         role: 'user',
@@ -434,32 +340,15 @@ export default function AdminPage() {
         email: email,
         hasAccount: true,
         blocked: false,
-        userId: userCredential.user.uid
+        userId: newUserId
       });
 
-      // Fazer login novamente como admin para restaurar a sessão
-      await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-
-      toast.dismiss();
-      toast.success(`Conta criada! Senha padrão: ${DEFAULT_PASSWORD}`);
+      toast.success(`Conta criada! Login: ${email} | Senha: ${DEFAULT_PASSWORD}`);
       loadData();
     } catch (error: unknown) {
-      toast.dismiss();
       console.error('Error creating account:', error);
-      // Tentar restaurar sessão do admin em caso de erro
-      try {
-        await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-      } catch {
-        toast.error('Erro ao restaurar sessão. Faça login novamente.');
-        router.push('/login');
-        return;
-      }
       if (error instanceof Error) {
-        if (error.message.includes('email-already-in-use')) {
-          toast.error('Este CPF já possui uma conta associada');
-        } else {
-          toast.error(`Erro: ${error.message}`);
-        }
+        toast.error(`Erro: ${error.message}`);
       } else {
         toast.error('Erro ao criar conta');
       }
@@ -1439,70 +1328,6 @@ export default function AdminPage() {
             </Button>
             <Button onClick={resetPassword} className="bg-[#B22234] hover:bg-[#8b1a28] w-full sm:w-auto">
               Alterar Senha
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirm Password Dialog for Authorizing CPF */}
-      <Dialog open={showConfirmPasswordDialog} onOpenChange={setShowConfirmPasswordDialog}>
-        <DialogContent className="mx-2 sm:mx-0">
-          <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Confirmar Autorização</DialogTitle>
-            <DialogDescription className="text-sm">
-              CPF: {newCPF ? formatCPFDisplay(newCPF) : '-'}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <Alert className="border-blue-300 bg-blue-50">
-              <AlertDescription className="text-blue-800 text-sm">
-                Para autorizar este CPF, digite sua senha de administrador. Isso é necessário para manter sua sessão ativa.
-              </AlertDescription>
-            </Alert>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Sua Senha de Admin</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Digite sua senha"
-                className="h-10 sm:h-9"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    confirmAuthorizeCPF();
-                  }
-                }}
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowConfirmPasswordDialog(false);
-                setConfirmPassword('');
-              }} 
-              className="w-full sm:w-auto"
-              disabled={isAuthorizing}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={confirmAuthorizeCPF} 
-              className="bg-[#B22234] hover:bg-[#8b1a28] w-full sm:w-auto"
-              disabled={isAuthorizing}
-            >
-              {isAuthorizing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Autorizando...
-                </>
-              ) : (
-                'Confirmar e Autorizar'
-              )}
             </Button>
           </DialogFooter>
         </DialogContent>
