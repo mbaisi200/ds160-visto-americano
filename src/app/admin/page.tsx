@@ -48,7 +48,8 @@ import {
   Lock,
   Unlock,
   Key,
-  FileDown
+  FileDown,
+  CheckCircle
 } from 'lucide-react';
 import { formatDateToBrazilian, formatDate, maskCPF } from '@/lib/masks';
 import { toast } from 'sonner';
@@ -70,6 +71,8 @@ interface AuthorizedCPF {
   email?: string;
   hasAccount?: boolean;
   blocked?: boolean;
+  processed?: boolean;
+  processedAt?: { seconds: number; nanoseconds: number };
   createdAt?: { seconds: number; nanoseconds: number };
   userId?: string;
   nome?: string;
@@ -292,6 +295,23 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error toggling block:', error);
       toast.error('Erro ao atualizar status');
+    }
+  };
+
+  const markAsProcessed = async (cpf: string) => {
+    if (!confirm('Marcar como processado? O cliente não poderá mais acessar o sistema.')) return;
+
+    try {
+      await updateDoc(doc(db, 'authorized_cpfs', cpf), {
+        blocked: true,
+        processed: true,
+        processedAt: new Date()
+      });
+      toast.success('CPF marcado como processado e bloqueado');
+      loadData();
+    } catch (error) {
+      console.error('Error marking as processed:', error);
+      toast.error('Erro ao marcar como processado');
     }
   };
 
@@ -1062,13 +1082,26 @@ export default function AdminPage() {
                           </td>
                           <td className="py-3 px-4 sm:px-2">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              cpf.processed ? 'bg-purple-100 text-purple-800' :
                               cpf.blocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
                             }`}>
-                              {cpf.blocked ? 'BLOQUEADO' : 'ATIVO'}
+                              {cpf.processed ? 'PROCESSADO' : cpf.blocked ? 'BLOQUEADO' : 'ATIVO'}
                             </span>
                           </td>
                           <td className="py-3 px-4 sm:px-2">
                             <div className="flex justify-end gap-1">
+                              {/* Botão Processado - só aparece se não estiver processado */}
+                              {!cpf.processed && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => markAsProcessed(cpf.cpf)}
+                                  title="Marcar como Processado"
+                                  className="h-9 w-9 sm:h-8 sm:w-8 p-0"
+                                >
+                                  <CheckCircle className="h-4 w-4 text-purple-600" />
+                                </Button>
+                              )}
                               {!cpf.hasAccount || !cpf.email ? (
                                 <Button
                                   variant="ghost"
