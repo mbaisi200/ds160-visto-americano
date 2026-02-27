@@ -91,6 +91,9 @@ export default function AdminPage() {
   const [showDialog, setShowDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showConfirmPasswordDialog, setShowConfirmPasswordDialog] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [editingCPF, setEditingCPF] = useState<AuthorizedCPF | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [newCPFValue, setNewCPFValue] = useState('');
@@ -173,43 +176,59 @@ export default function AdminPage() {
 
   const authorizeCPF = async () => {
     if (!newCPF || newCPF.replace(/\D/g, '').length !== 11) {
-      toast.error('CPF inválido');
+      toast.error('CPF inválido. Digite 11 números.');
       return;
     }
 
     const cleanCPF = newCPF.replace(/\D/g, '');
 
     // Check if already exists
-    const existingDoc = await getDoc(doc(db, 'authorized_cpfs', cleanCPF));
-    if (existingDoc.exists()) {
-      toast.error('Este CPF já está autorizado');
+    try {
+      const existingDoc = await getDoc(doc(db, 'authorized_cpfs', cleanCPF));
+      if (existingDoc.exists()) {
+        toast.error('Este CPF já está autorizado');
+        return;
+      }
+    } catch (checkError) {
+      console.error('Erro ao verificar CPF:', checkError);
+      toast.error('Erro ao verificar se CPF existe');
       return;
     }
 
-    // Salvar dados do admin atual para re-login posterior
+    // Abrir dialog para confirmar senha
+    setConfirmPassword('');
+    setShowConfirmPasswordDialog(true);
+  };
+
+  const confirmAuthorizeCPF = async () => {
+    if (!confirmPassword) {
+      toast.error('Digite sua senha');
+      return;
+    }
+
+    const cleanCPF = newCPF.replace(/\D/g, '');
     const currentUser = auth.currentUser;
     const adminEmail = currentUser?.email;
 
     if (!adminEmail) {
       toast.error('Erro: Sessão do admin não encontrada');
+      setShowConfirmPasswordDialog(false);
       return;
     }
 
-    // Pedir confirmação com a senha do admin
-    const adminPassword = prompt('Digite sua senha de administrador para confirmar a operação:');
-    if (!adminPassword) {
-      toast.info('Operação cancelada');
-      return;
-    }
+    setIsAuthorizing(true);
 
     try {
-      toast.loading('Autorizando CPF...');
+      console.log('Iniciando criação de usuário para CPF:', cleanCPF);
       const email = `${cleanCPF}@ds160.local`;
 
       // Criar usuário no Firebase Auth
+      console.log('Criando usuário no Firebase Auth...');
       const userCredential = await createUserWithEmailAndPassword(auth, email, DEFAULT_PASSWORD);
+      console.log('Usuário criado:', userCredential.user.uid);
 
       // Criar documento do usuário no Firestore
+      console.log('Criando documento no Firestore (users)...');
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         uid: userCredential.user.uid,
         email: email,
@@ -217,8 +236,10 @@ export default function AdminPage() {
         role: 'user',
         createdAt: new Date()
       });
+      console.log('Documento users criado');
 
       // Criar entrada em authorized_cpfs
+      console.log('Criando documento no Firestore (authorized_cpfs)...');
       await setDoc(doc(db, 'authorized_cpfs', cleanCPF), {
         cpf: cleanCPF,
         email: email,
@@ -227,35 +248,47 @@ export default function AdminPage() {
         blocked: false,
         userId: userCredential.user.uid
       });
+      console.log('Documento authorized_cpfs criado');
 
       // Fazer login novamente como admin para restaurar a sessão
-      await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+      console.log('Fazendo re-login como admin...');
+      await signInWithEmailAndPassword(auth, adminEmail, confirmPassword);
+      console.log('Re-login realizado com sucesso');
 
-      toast.dismiss();
+      setShowConfirmPasswordDialog(false);
       toast.success(`CPF autorizado! Senha padrão: ${DEFAULT_PASSWORD}`);
       setNewCPF('');
+      setConfirmPassword('');
+      setIsAuthorizing(false);
       loadData();
     } catch (error: unknown) {
-      toast.dismiss();
-      console.error('Error authorizing CPF:', error);
-      // Tentar restaurar sessão do admin em caso de erro
+      console.error('Erro completo ao autorizar CPF:', error);
+      setIsAuthorizing(false);
+      
+      // Tentar restaurar sessão do admin
       try {
-        await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+        await signInWithEmailAndPassword(auth, adminEmail, confirmPassword);
       } catch {
+        console.error('Erro ao restaurar sessão');
         toast.error('Erro ao restaurar sessão. Faça login novamente.');
+        setShowConfirmPasswordDialog(false);
         router.push('/login');
         return;
       }
+
       if (error instanceof Error) {
+        console.error('Mensagem de erro:', error.message);
         if (error.message.includes('email-already-in-use')) {
           toast.error('Este CPF já possui uma conta associada');
         } else if (error.message.includes('weak-password')) {
           toast.error('Senha muito fraca');
+        } else if (error.message.includes('permission-denied') || error.message.includes('insufficient permissions')) {
+          toast.error('Erro de permissão no Firebase. Verifique as regras do Firestore.');
         } else {
           toast.error(`Erro: ${error.message}`);
         }
       } else {
-        toast.error('Erro ao autorizar CPF');
+        toast.error('Erro desconhecido ao autorizar CPF');
       }
     }
   };
@@ -1329,6 +1362,70 @@ export default function AdminPage() {
             </Button>
             <Button onClick={resetPassword} className="bg-[#B22234] hover:bg-[#8b1a28] w-full sm:w-auto">
               Alterar Senha
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Password Dialog for Authorizing CPF */}
+      <Dialog open={showConfirmPasswordDialog} onOpenChange={setShowConfirmPasswordDialog}>
+        <DialogContent className="mx-2 sm:mx-0">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl">Confirmar Autorização</DialogTitle>
+            <DialogDescription className="text-sm">
+              CPF: {newCPF ? formatCPFDisplay(newCPF) : '-'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <Alert className="border-blue-300 bg-blue-50">
+              <AlertDescription className="text-blue-800 text-sm">
+                Para autorizar este CPF, digite sua senha de administrador. Isso é necessário para manter sua sessão ativa.
+              </AlertDescription>
+            </Alert>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Sua Senha de Admin</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Digite sua senha"
+                className="h-10 sm:h-9"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    confirmAuthorizeCPF();
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowConfirmPasswordDialog(false);
+                setConfirmPassword('');
+              }} 
+              className="w-full sm:w-auto"
+              disabled={isAuthorizing}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={confirmAuthorizeCPF} 
+              className="bg-[#B22234] hover:bg-[#8b1a28] w-full sm:w-auto"
+              disabled={isAuthorizing}
+            >
+              {isAuthorizing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Autorizando...
+                </>
+              ) : (
+                'Confirmar e Autorizar'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
