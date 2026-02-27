@@ -210,6 +210,11 @@ export default function AdminPage() {
     const currentUser = auth.currentUser;
     const adminEmail = currentUser?.email;
 
+    console.log('=== INICIANDO AUTORIZAÇÃO DE CPF ===');
+    console.log('CPF:', cleanCPF);
+    console.log('Admin Email:', adminEmail);
+    console.log('CurrentUser UID:', currentUser?.uid);
+
     if (!adminEmail) {
       toast.error('Erro: Sessão do admin não encontrada');
       setShowConfirmPasswordDialog(false);
@@ -219,28 +224,30 @@ export default function AdminPage() {
     setIsAuthorizing(true);
 
     try {
-      console.log('Iniciando criação de usuário para CPF:', cleanCPF);
       const email = `${cleanCPF}@ds160.local`;
+      console.log('Email do novo usuário:', email);
 
       // Criar usuário no Firebase Auth
-      console.log('Criando usuário no Firebase Auth...');
+      console.log('PASSO 1: Criando usuário no Firebase Auth...');
       const userCredential = await createUserWithEmailAndPassword(auth, email, DEFAULT_PASSWORD);
-      console.log('Usuário criado:', userCredential.user.uid);
+      console.log('PASSO 1 OK - Usuário criado com UID:', userCredential.user.uid);
 
       // Criar documento do usuário no Firestore
-      console.log('Criando documento no Firestore (users)...');
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
+      console.log('PASSO 2: Criando documento no Firestore (users)...');
+      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      await setDoc(userDocRef, {
         uid: userCredential.user.uid,
         email: email,
         cpf: cleanCPF,
         role: 'user',
         createdAt: new Date()
       });
-      console.log('Documento users criado');
+      console.log('PASSO 2 OK - Documento users criado');
 
       // Criar entrada em authorized_cpfs
-      console.log('Criando documento no Firestore (authorized_cpfs)...');
-      await setDoc(doc(db, 'authorized_cpfs', cleanCPF), {
+      console.log('PASSO 3: Criando documento no Firestore (authorized_cpfs)...');
+      const cpfDocRef = doc(db, 'authorized_cpfs', cleanCPF);
+      await setDoc(cpfDocRef, {
         cpf: cleanCPF,
         email: email,
         createdAt: new Date(),
@@ -248,28 +255,43 @@ export default function AdminPage() {
         blocked: false,
         userId: userCredential.user.uid
       });
-      console.log('Documento authorized_cpfs criado');
+      console.log('PASSO 3 OK - Documento authorized_cpfs criado');
+
+      // Verificar se foi salvo
+      console.log('PASSO 4: Verificando se foi salvo...');
+      const verifyDoc = await getDoc(cpfDocRef);
+      console.log('PASSO 4 - Documento existe:', verifyDoc.exists());
+      console.log('PASSO 4 - Dados:', verifyDoc.data());
 
       // Fazer login novamente como admin para restaurar a sessão
-      console.log('Fazendo re-login como admin...');
+      console.log('PASSO 5: Fazendo re-login como admin...');
       await signInWithEmailAndPassword(auth, adminEmail, confirmPassword);
-      console.log('Re-login realizado com sucesso');
+      console.log('PASSO 5 OK - Re-login realizado com sucesso');
 
+      console.log('=== AUTORIZAÇÃO CONCLUÍDA COM SUCESSO ===');
+      
       setShowConfirmPasswordDialog(false);
       toast.success(`CPF autorizado! Senha padrão: ${DEFAULT_PASSWORD}`);
       setNewCPF('');
       setConfirmPassword('');
       setIsAuthorizing(false);
-      loadData();
+      
+      // Recarregar dados
+      console.log('Recarregando lista de CPFs...');
+      await loadData();
+      console.log('Lista recarregada. Total de CPFs:', authorizedCPFs.length + 1);
+      
     } catch (error: unknown) {
-      console.error('Erro completo ao autorizar CPF:', error);
+      console.error('=== ERRO AO AUTORIZAR CPF ===');
+      console.error('Erro completo:', error);
       setIsAuthorizing(false);
       
       // Tentar restaurar sessão do admin
       try {
         await signInWithEmailAndPassword(auth, adminEmail, confirmPassword);
-      } catch {
-        console.error('Erro ao restaurar sessão');
+        console.log('Sessão do admin restaurada');
+      } catch (restoreError) {
+        console.error('Erro ao restaurar sessão:', restoreError);
         toast.error('Erro ao restaurar sessão. Faça login novamente.');
         setShowConfirmPasswordDialog(false);
         router.push('/login');
@@ -277,18 +299,27 @@ export default function AdminPage() {
       }
 
       if (error instanceof Error) {
-        console.error('Mensagem de erro:', error.message);
+        console.error('Tipo do erro:', error.name);
+        console.error('Mensagem do erro:', error.message);
+        
+        // Mostrar erro específico
+        let errorMessage = error.message;
+        
         if (error.message.includes('email-already-in-use')) {
-          toast.error('Este CPF já possui uma conta associada');
+          errorMessage = 'Este CPF já possui uma conta associada';
         } else if (error.message.includes('weak-password')) {
-          toast.error('Senha muito fraca');
-        } else if (error.message.includes('permission-denied') || error.message.includes('insufficient permissions')) {
-          toast.error('Erro de permissão no Firebase. Verifique as regras do Firestore.');
-        } else {
-          toast.error(`Erro: ${error.message}`);
+          errorMessage = 'Senha muito fraca';
+        } else if (error.message.includes('permission-denied') || error.message.includes('PERMISSION_DENIED')) {
+          errorMessage = 'Erro de permissão no Firebase. Verifique as regras do Firestore.';
+        } else if (error.message.includes('invalid-credential') || error.message.includes('wrong-password')) {
+          errorMessage = 'Senha de admin incorreta';
         }
+        
+        toast.error(`Erro: ${errorMessage}`);
+        alert(`ERRO: ${errorMessage}\n\nDetalhes: ${error.message}`);
       } else {
         toast.error('Erro desconhecido ao autorizar CPF');
+        alert('Erro desconhecido ao autorizar CPF');
       }
     }
   };
