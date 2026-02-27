@@ -771,18 +771,18 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+      <header className="bg-gradient-to-r from-[#3C3B6E] to-[#B22234] text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-[#3C3B6E] to-[#B22234] rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm sm:text-base">SB</span>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                <span className="text-[#3C3B6E] font-bold">SB</span>
               </div>
               <div>
-                <h1 className="font-bold text-[#3C3B6E] text-sm sm:text-base">Painel Administrativo</h1>
-                <p className="text-xs text-gray-500 hidden sm:block">DS160 - Visto Americano</p>
+                <h1 className="text-xl font-bold">Painel Administrativo</h1>
+                <p className="text-sm text-white/80">DS160 - Visto Americano</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -790,83 +790,97 @@ export default function AdminPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => router.push('/admin/senhas')}
-                className="h-9 sm:h-10 border-[#3C3B6E] text-[#3C3B6E] hover:bg-[#3C3B6E] hover:text-white"
+                className="text-white border-white hover:bg-white hover:text-[#3C3B6E]"
               >
                 <Key className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Senhas</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleSignOut} className="h-9 sm:h-10">
-                <LogOut className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Sair</span>
+              <Button variant="outline" onClick={handleSignOut} className="text-white border-white hover:bg-white hover:text-[#3C3B6E]">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-3 sm:pt-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-[#B22234]" />
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold">{formularios.length}</p>
-                  <p className="text-xs text-gray-500">Total Formulários</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-3 sm:pt-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500" />
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold">{formularios.filter(f => f.status === 'pendente').length}</p>
-                  <p className="text-xs text-gray-500">Pendentes</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-3 sm:pt-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold">{formularios.filter(f => f.status === 'processado').length}</p>
-                  <p className="text-xs text-gray-500">Processados</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-3 sm:pt-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-[#3C3B6E]" />
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold">{authorizedCPFs.length}</p>
-                  <p className="text-xs text-gray-500">CPFs Autorizados</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Navigation */}
+      <nav className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex gap-4">
+            <Button
+              variant="ghost"
+              className={`border-b-2 ${activeTab === 'formularios' ? 'border-[#B22234] text-[#3C3B6E]' : 'border-transparent text-gray-600 hover:text-[#3C3B6E]'}`}
+              onClick={() => setActiveTab('formularios')}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Formulários
+            </Button>
+            <Button
+              variant="ghost"
+              className={`border-b-2 ${activeTab === 'cpfs' ? 'border-[#B22234] text-[#3C3B6E]' : 'border-transparent text-gray-600 hover:text-[#3C3B6E]'}`}
+              onClick={() => setActiveTab('cpfs')}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              CPFs Autorizados
+            </Button>
+          </div>
         </div>
+      </nav>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-4 sm:mb-6">
-          <Button
-            variant={activeTab === 'formularios' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('formularios')}
-            className={`${activeTab === 'formularios' ? 'bg-[#3C3B6E]' : ''} h-10 sm:h-9`}
-          >
-            <FileText className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Formulários</span>
-          </Button>
-          <Button
-            variant={activeTab === 'cpfs' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('cpfs')}
-            className={`${activeTab === 'cpfs' ? 'bg-[#3C3B6E]' : ''} h-10 sm:h-9`}
-          >
-            <Users className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">CPFs Autorizados</span>
-          </Button>
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Total Formulários
+              </CardTitle>
+              <FileText className="h-5 w-5 text-[#3C3B6E]" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-[#3C3B6E]">{formularios.length}</div>
+              <p className="text-xs text-gray-500 mt-1">Formulários no sistema</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Pendentes
+              </CardTitle>
+              <FileText className="h-5 w-5 text-yellow-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-yellow-500">{formularios.filter(f => f.status === 'pendente').length}</div>
+              <p className="text-xs text-gray-500 mt-1">Aguardando processamento</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Processados
+              </CardTitle>
+              <FileText className="h-5 w-5 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-500">{formularios.filter(f => f.status === 'processado').length}</div>
+              <p className="text-xs text-gray-500 mt-1">Finalizados</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                CPFs Autorizados
+              </CardTitle>
+              <Users className="h-5 w-5 text-[#B22234]" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-[#B22234]">{authorizedCPFs.length}</div>
+              <p className="text-xs text-gray-500 mt-1">Clientes cadastrados</p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Search and Filters */}
