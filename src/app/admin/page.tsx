@@ -315,6 +315,20 @@ export default function AdminPage() {
     }
   };
 
+  const deleteForm = async (formId: string, formCpf: string) => {
+    if (!confirm('Tem certeza que deseja excluir este formulário? Esta ação não pode ser desfeita.')) return;
+
+    try {
+      // Excluir o formulário do Firestore
+      await deleteDoc(doc(db, 'ds160_forms', formId));
+      toast.success('Formulário excluído com sucesso');
+      loadData();
+    } catch (error) {
+      console.error('Error deleting form:', error);
+      toast.error('Erro ao excluir formulário');
+    }
+  };
+
   const createAccountForCPF = async (cpfData: AuthorizedCPF) => {
     try {
       const email = `${cpfData.cpf}@ds160.local`;
@@ -790,11 +804,11 @@ export default function AdminPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => router.push('/admin/senhas')}
-                className="text-white border-white hover:bg-white hover:text-[#623AA2]"
+                className="bg-white/20 backdrop-blur-sm text-white border-white hover:bg-white hover:text-[#623AA2]"
               >
                 <Key className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Senhas</span>
               </Button>
-              <Button variant="outline" onClick={handleSignOut} className="text-white border-white hover:bg-white hover:text-[#623AA2]">
+              <Button variant="outline" onClick={handleSignOut} className="bg-white/20 backdrop-blur-sm text-white border-white hover:bg-white hover:text-[#623AA2]">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sair
               </Button>
@@ -1015,6 +1029,15 @@ export default function AdminPage() {
                                 className="h-9 w-9 sm:h-8 sm:w-8 p-0"
                               >
                                 <Download className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deleteForm(form.id, form.cpf)}
+                                title="Excluir"
+                                className="h-9 w-9 sm:h-8 sm:w-8 p-0 hover:bg-red-100"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
                               </Button>
                             </div>
                           </td>
