@@ -114,6 +114,7 @@ interface FormData {
   travelSponsor: string;
   sponsorName: string;
   sponsorPhone: string;
+  sponsorEmail: string;
   sponsorRelation: string;
   sponsorCity: string;
   sponsorState: string;
@@ -283,6 +284,7 @@ const initialFormData: FormData = {
   travelSponsor: '',
   sponsorName: '',
   sponsorPhone: '',
+  sponsorEmail: '',
   sponsorRelation: '',
   sponsorCity: '',
   sponsorState: '',
@@ -789,6 +791,7 @@ export default function FormularioPage() {
     if (formData.travelSponsor === 'OUTROS') {
       addField('6. VIAGEM', 'Nome do Patrocinador', formData.sponsorName);
       addField('6. VIAGEM', 'Telefone do Patrocinador', formData.sponsorPhone);
+      addField('6. VIAGEM', 'E-mail do Patrocinador', formData.sponsorEmail);
       addField('6. VIAGEM', 'Relação', formData.sponsorRelation);
       addField('6. VIAGEM', 'Cidade do Patrocinador', formData.sponsorCity);
       addField('6. VIAGEM', 'Estado do Patrocinador', formData.sponsorState);
@@ -1703,17 +1706,51 @@ export default function FormularioPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
+                      <Label>E-mail do Patrocinador</Label>
+                      <Input
+                        type="email"
+                        value={formData.sponsorEmail}
+                        onChange={(e) => handleInputChange('sponsorEmail', e.target.value.toLowerCase())}
+                        placeholder="exemplo@email.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label>Relação com você</Label>
                       <Input
                         value={formData.sponsorRelation}
                         onChange={(e) => handleInputChange('sponsorRelation', e.target.value)}
                       />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Cidade</Label>
                       <Input
                         value={formData.sponsorCity}
                         onChange={(e) => handleInputChange('sponsorCity', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Estado</Label>
+                      <Input
+                        value={formData.sponsorState}
+                        onChange={(e) => handleInputChange('sponsorState', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>CEP</Label>
+                      <Input
+                        value={formData.sponsorZipCode}
+                        onChange={(e) => handleInputChange('sponsorZipCode', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>País</Label>
+                      <Input
+                        value={formData.sponsorCountry}
+                        onChange={(e) => handleInputChange('sponsorCountry', e.target.value)}
                       />
                     </div>
                   </div>
