@@ -84,6 +84,43 @@ export function removeAccents(text: string): string {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+// Get current date/time in Brazil timezone (UTC-3)
+// Esta função retorna a data/hora atual no fuso horário do Brasil
+export function getBrazilDateTime(): Date {
+  const now = new Date();
+  // Brasil é UTC-3, então subtraímos 3 horas do UTC
+  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const brazilTime = new Date(utcTime - (3 * 3600000)); // UTC-3
+  return brazilTime;
+}
+
+// Get current date in Brazilian format (DD/MM/YYYY) using Brazil timezone
+export function getBrazilDate(): string {
+  const now = new Date();
+  // Converte para o fuso do Brasil (UTC-3)
+  const brazilDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const day = brazilDate.getDate().toString().padStart(2, '0');
+  const month = (brazilDate.getMonth() + 1).toString().padStart(2, '0');
+  const year = brazilDate.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+// Get current datetime in Brazilian format using Brazil timezone
+export function getBrazilDateTimeString(): string {
+  const now = new Date();
+  return now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+}
+
+// Get current date in ISO format (YYYY-MM-DD) using Brazil timezone
+export function getBrazilDateISO(): string {
+  const now = new Date();
+  const brazilDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const day = brazilDate.getDate().toString().padStart(2, '0');
+  const month = (brazilDate.getMonth() + 1).toString().padStart(2, '0');
+  const year = brazilDate.getFullYear();
+  return `${year}-${month}-${day}`;
+}
+
 // Format date for display (from ISO to Brazilian format)
 // Corrigido: trata a data como local para evitar problema de fuso horário
 export function formatDateToBrazilian(dateString: string): string {

@@ -51,7 +51,7 @@ import {
   Plus,
   Trash2
 } from 'lucide-react';
-import { removeAccents, formatDateToBrazilian, formatDateForTXT, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF } from '@/lib/masks';
+import { removeAccents, formatDateToBrazilian, formatDateForTXT, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF, getBrazilDateTimeString } from '@/lib/masks';
 import { toast } from 'sonner';
 
 interface PrevJob {
@@ -564,9 +564,27 @@ export default function FormularioPage() {
 
 
   const handleInputChange = (field: keyof FormData, value: string) => {
+    // Se o valor parece ser uma data no formato ISO (YYYY-MM-DD), não aplica transformações
+    // Isso evita problemas de fuso horário e mantém a data exata que o usuário selecionou
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [field]: removeAccents(value.toUpperCase())
+    }));
+  };
+
+  // Handler específico para campos de data - não aplica transformações
+  const handleDateChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value // Mantém o valor ISO exatamente como vem do input date
     }));
   };
 
@@ -1192,7 +1210,7 @@ export default function FormularioPage() {
     // Build TXT
     let txt = 'FORMULÁRIO DS160 - VISTO AMERICANO\n';
     txt += '=====================================\n\n';
-    txt += `Data de geração: ${new Date().toLocaleString('pt-BR')}\n\n`;
+    txt += `Data de geração: ${getBrazilDateTimeString()}\n\n`;
 
     Object.entries(sections).forEach(([section, items]) => {
       if (items.length > 0) {
