@@ -51,7 +51,7 @@ import {
   Plus,
   Trash2
 } from 'lucide-react';
-import { removeAccents, formatDateToBrazilian, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF } from '@/lib/masks';
+import { removeAccents, formatDateToBrazilian, formatDateForTXT, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF } from '@/lib/masks';
 import { toast } from 'sonner';
 
 interface PrevJob {
@@ -75,6 +75,17 @@ interface Companion {
   lastName: string;
   firstName: string;
   relationship: string;
+}
+
+interface School {
+  name: string;
+  course: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  startDate: string;
+  endDate: string;
 }
 
 interface FormData {
@@ -172,10 +183,18 @@ interface FormData {
   fatherFirstName: string;
   fatherBirthDate: string;
   fatherInUSA: string;
+  fatherUSAAddress: string;
+  fatherUSAZipCode: string;
+  fatherUSAPhone: string;
+  fatherUSAEmail: string;
   motherLastName: string;
   motherFirstName: string;
   motherBirthDate: string;
   motherInUSA: string;
+  motherUSAAddress: string;
+  motherUSAZipCode: string;
+  motherUSAPhone: string;
+  motherUSAEmail: string;
   relativesInUSA: string;
   relativeName: string;
   relativeRelation: string;
@@ -233,6 +252,7 @@ interface FormData {
   universityCourse: string;
   universityStartDate: string;
   universityEndDate: string;
+  schoolsList: School[];
   // Section 12
   traveledLast5Years: string;
   traveledCountry1: string;
@@ -333,10 +353,18 @@ const initialFormData: FormData = {
   fatherFirstName: '',
   fatherBirthDate: '',
   fatherInUSA: '',
+  fatherUSAAddress: '',
+  fatherUSAZipCode: '',
+  fatherUSAPhone: '',
+  fatherUSAEmail: '',
   motherLastName: '',
   motherFirstName: '',
   motherBirthDate: '',
   motherInUSA: '',
+  motherUSAAddress: '',
+  motherUSAZipCode: '',
+  motherUSAPhone: '',
+  motherUSAEmail: '',
   relativesInUSA: '',
   relativeName: '',
   relativeRelation: '',
@@ -391,6 +419,7 @@ const initialFormData: FormData = {
   universityCourse: '',
   universityStartDate: '',
   universityEndDate: '',
+  schoolsList: [],
   traveledLast5Years: '',
   traveledCountry1: '',
   spokenLanguages: '',
@@ -608,17 +637,41 @@ export default function FormularioPage() {
 
     // Seção 7 - Vistos Anteriores
     if (!formData.usTravelHistory) errors.push('Já teve visto para os EUA?');
+    
+    // Se SIM para visto anterior, apenas campos da Última vez nos EUA são obrigatórios
+    if (formData.usTravelHistory === 'SIM') {
+      if (!formData.lastArrivalDate) errors.push('Data de chegada (última vez nos EUA)');
+      if (!formData.lastDepartureDate) errors.push('Data de saída (última vez nos EUA)');
+    }
 
     // Seção 8 - Informações Familiares
     // Pai - campos obrigatórios
     if (!formData.fatherLastName) errors.push('Sobrenome do pai');
     if (!formData.fatherFirstName) errors.push('Nome do pai');
     if (!formData.fatherBirthDate) errors.push('Data de nascimento do pai');
+    if (!formData.fatherInUSA) errors.push('Pai está nos EUA?');
+    
+    // Se SIM para pai nos EUA, campos de endereço são obrigatórios
+    if (formData.fatherInUSA === 'SIM') {
+      if (!formData.fatherUSAAddress) errors.push('Endereço do pai nos EUA');
+      if (!formData.fatherUSAZipCode) errors.push('Zip Code do pai');
+      if (!formData.fatherUSAPhone) errors.push('Telefone do pai nos EUA');
+      if (!formData.fatherUSAEmail) errors.push('E-mail do pai');
+    }
     
     // Mãe - campos obrigatórios
     if (!formData.motherLastName) errors.push('Sobrenome da mãe');
     if (!formData.motherFirstName) errors.push('Nome da mãe');
     if (!formData.motherBirthDate) errors.push('Data de nascimento da mãe');
+    if (!formData.motherInUSA) errors.push('Mãe está nos EUA?');
+    
+    // Se SIM para mãe nos EUA, campos de endereço são obrigatórios
+    if (formData.motherInUSA === 'SIM') {
+      if (!formData.motherUSAAddress) errors.push('Endereço da mãe nos EUA');
+      if (!formData.motherUSAZipCode) errors.push('Zip Code da mãe');
+      if (!formData.motherUSAPhone) errors.push('Telefone da mãe nos EUA');
+      if (!formData.motherUSAEmail) errors.push('E-mail da mãe');
+    }
     
     if (!formData.relativesInUSA) errors.push('Possui parentes nos EUA?');
     
@@ -815,6 +868,41 @@ export default function FormularioPage() {
     }));
   };
 
+  // Schools management
+  const emptySchool: School = {
+    name: '',
+    course: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
+    startDate: '',
+    endDate: ''
+  };
+
+  const addSchool = () => {
+    setFormData(prev => ({
+      ...prev,
+      schoolsList: [...prev.schoolsList, { ...emptySchool }]
+    }));
+  };
+
+  const removeSchool = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      schoolsList: prev.schoolsList.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateSchool = (index: number, field: keyof School, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      schoolsList: prev.schoolsList.map((item, i) =>
+        i === index ? { ...item, [field]: removeAccents(value.toUpperCase()) } : item
+      )
+    }));
+  };
+
   const generateTXT = () => {
     const sections: { [key: string]: string[] } = {
       '0. LOCAL DE SOLICITAÇÃO': [],
@@ -850,7 +938,7 @@ export default function FormularioPage() {
       addField('1. INFORMAÇÕES PESSOAIS', 'Antigo Sobrenome', formData.oldLastName);
       addField('1. INFORMAÇÕES PESSOAIS', 'Antigo Nome', formData.oldFirstName);
     }
-    addField('1. INFORMAÇÕES PESSOAIS', 'Data de Nascimento', formatDateToBrazilian(formData.birthDate));
+    addField('1. INFORMAÇÕES PESSOAIS', 'Data de Nascimento', formatDateForTXT(formData.birthDate));
     addField('1. INFORMAÇÕES PESSOAIS', 'Cidade/Estado de Nascimento', formData.birthCity);
     addField('1. INFORMAÇÕES PESSOAIS', 'País de Nascimento', formData.birthCountry);
     addField('1. INFORMAÇÕES PESSOAIS', 'CPF', formData.cpf);
@@ -900,15 +988,15 @@ export default function FormularioPage() {
     // Section 5
     addField('5. PASSAPORTE', 'Série', formData.passportSeries);
     addField('5. PASSAPORTE', 'Número', formData.passportNumber);
-    addField('5. PASSAPORTE', 'Data de Emissão', formatDateToBrazilian(formData.passportIssueDate));
-    addField('5. PASSAPORTE', 'Data de Expiração', formatDateToBrazilian(formData.passportExpiryDate));
+    addField('5. PASSAPORTE', 'Data de Emissão', formatDateForTXT(formData.passportIssueDate));
+    addField('5. PASSAPORTE', 'Data de Expiração', formatDateForTXT(formData.passportExpiryDate));
 
     // Section 6
     addField('6. VIAGEM', 'Motivo da viagem', formData.travelReason);
     addField('6. VIAGEM', 'Possui planos específicos', formData.hasTravelPlans);
     addField('6. VIAGEM', 'Sabe a data de chegada', formData.knowsArrivalDate);
     if (formData.knowsArrivalDate === 'SIM') {
-      addField('6. VIAGEM', 'Data de chegada pretendida', formatDateToBrazilian(formData.arrivalDate));
+      addField('6. VIAGEM', 'Data de chegada pretendida', formatDateForTXT(formData.arrivalDate));
     }
     addField('6. VIAGEM', 'Tempo de permanência', formData.stayDuration);
     addField('6. VIAGEM', 'Onde deseja visitar', formData.placesToVisit);
@@ -949,13 +1037,13 @@ export default function FormularioPage() {
     // Section 7
     addField('7. VISTOS ANTERIORES', 'Já teve visto EUA', formData.usTravelHistory);
     if (formData.usTravelHistory === 'SIM') {
-      addField('7. VISTOS ANTERIORES', 'Data de Emissão do Visto', formatDateToBrazilian(formData.visaIssueDate));
-      addField('7. VISTOS ANTERIORES', 'Data de Vencimento', formatDateToBrazilian(formData.visaExpiryDate));
+      addField('7. VISTOS ANTERIORES', 'Data de Emissão do Visto', formatDateForTXT(formData.visaIssueDate));
+      addField('7. VISTOS ANTERIORES', 'Data de Vencimento', formatDateForTXT(formData.visaExpiryDate));
       addField('7. VISTOS ANTERIORES', 'Número do Visto', formData.visaNumber);
-      addField('7. VISTOS ANTERIORES', 'Última chegada', formatDateToBrazilian(formData.lastArrivalDate));
-      addField('7. VISTOS ANTERIORES', 'Última saída', formatDateToBrazilian(formData.lastDepartureDate));
-      addField('7. VISTOS ANTERIORES', 'Penúltima chegada', formatDateToBrazilian(formData.secondLastArrivalDate));
-      addField('7. VISTOS ANTERIORES', 'Penúltima saída', formatDateToBrazilian(formData.secondLastDepartureDate));
+      addField('7. VISTOS ANTERIORES', 'Última chegada', formatDateForTXT(formData.lastArrivalDate));
+      addField('7. VISTOS ANTERIORES', 'Última saída', formatDateForTXT(formData.lastDepartureDate));
+      addField('7. VISTOS ANTERIORES', 'Penúltima chegada', formatDateForTXT(formData.secondLastArrivalDate));
+      addField('7. VISTOS ANTERIORES', 'Penúltima saída', formatDateForTXT(formData.secondLastDepartureDate));
       addField('7. VISTOS ANTERIORES', 'Visto negado/cancelado', formData.visaDenied);
       if (formData.visaDenied === 'SIM') {
         addField('7. VISTOS ANTERIORES', 'Motivo', formData.visaDeniedReason);
@@ -965,12 +1053,24 @@ export default function FormularioPage() {
     // Section 8
     addField('8. INFORMAÇÕES FAMILIARES', 'Sobrenome do Pai', formData.fatherLastName);
     addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Pai', formData.fatherFirstName);
-    addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Pai', formatDateToBrazilian(formData.fatherBirthDate));
+    addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Pai', formatDateForTXT(formData.fatherBirthDate));
     addField('8. INFORMAÇÕES FAMILIARES', 'Pai nos EUA', formData.fatherInUSA);
+    if (formData.fatherInUSA === 'SIM') {
+      addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Pai nos EUA', formData.fatherUSAAddress);
+      addField('8. INFORMAÇÕES FAMILIARES', 'Zip Code do Pai', formData.fatherUSAZipCode);
+      addField('8. INFORMAÇÕES FAMILIARES', 'Telefone do Pai nos EUA', formData.fatherUSAPhone);
+      addField('8. INFORMAÇÕES FAMILIARES', 'E-mail do Pai', formData.fatherUSAEmail);
+    }
     addField('8. INFORMAÇÕES FAMILIARES', 'Sobrenome da Mãe', formData.motherLastName);
     addField('8. INFORMAÇÕES FAMILIARES', 'Nome da Mãe', formData.motherFirstName);
-    addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Mãe', formatDateToBrazilian(formData.motherBirthDate));
+    addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Mãe', formatDateForTXT(formData.motherBirthDate));
     addField('8. INFORMAÇÕES FAMILIARES', 'Mãe nos EUA', formData.motherInUSA);
+    if (formData.motherInUSA === 'SIM') {
+      addField('8. INFORMAÇÕES FAMILIARES', 'Endereço da Mãe nos EUA', formData.motherUSAAddress);
+      addField('8. INFORMAÇÕES FAMILIARES', 'Zip Code da Mãe', formData.motherUSAZipCode);
+      addField('8. INFORMAÇÕES FAMILIARES', 'Telefone da Mãe nos EUA', formData.motherUSAPhone);
+      addField('8. INFORMAÇÕES FAMILIARES', 'E-mail da Mãe', formData.motherUSAEmail);
+    }
     addField('8. INFORMAÇÕES FAMILIARES', 'Parentes nos EUA', formData.relativesInUSA);
     if (formData.relativesInUSA === 'SIM') {
       addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Parente', formData.relativeName);
@@ -986,7 +1086,7 @@ export default function FormularioPage() {
     addField('8. INFORMAÇÕES FAMILIARES', 'É casado(a) atualmente', formData.isCurrentlyMarried);
     if (formData.isCurrentlyMarried === 'SIM') {
       addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Cônjuge', formData.spouseName);
-      addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Cônjuge', formatDateToBrazilian(formData.spouseBirthDate));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Cônjuge', formatDateForTXT(formData.spouseBirthDate));
       addField('8. INFORMAÇÕES FAMILIARES', 'Cidade/Estado Nasc. Cônjuge', formData.spouseBirthCityState);
       addField('8. INFORMAÇÕES FAMILIARES', 'Reside mesmo endereço', formData.spouseSameAddress);
       if (formData.spouseSameAddress === 'NAO') {
@@ -1002,11 +1102,11 @@ export default function FormularioPage() {
     addField('8. INFORMAÇÕES FAMILIARES', 'Já foi casado', formData.wasMarried);
     if (formData.wasMarried === 'SIM') {
       addField('8. INFORMAÇÕES FAMILIARES', 'Nome Ex-cônjuge', formData.exSpouseName);
-      addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Ex-cônjuge', formatDateToBrazilian(formData.exSpouseBirthDate));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Ex-cônjuge', formatDateForTXT(formData.exSpouseBirthDate));
       addField('8. INFORMAÇÕES FAMILIARES', 'Cidade Nasc. Ex-cônjuge', formData.exSpouseBirthCity);
       addField('8. INFORMAÇÕES FAMILIARES', 'Estado Nasc. Ex-cônjuge', formData.exSpouseBirthState);
-      addField('8. INFORMAÇÕES FAMILIARES', 'Data Casamento', formatDateToBrazilian(formData.marriageDate));
-      addField('8. INFORMAÇÕES FAMILIARES', 'Data Divórcio', formatDateToBrazilian(formData.divorceDate));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Data Casamento', formatDateForTXT(formData.marriageDate));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Data Divórcio', formatDateForTXT(formData.divorceDate));
       addField('8. INFORMAÇÕES FAMILIARES', 'País Divórcio', formData.divorceCountry);
       addField('8. INFORMAÇÕES FAMILIARES', 'Motivo Divórcio', formData.divorceReason);
     }
@@ -1018,7 +1118,7 @@ export default function FormularioPage() {
     addField('9. OCUPAÇÃO ATUAL', 'Cidade', formData.companyCity);
     addField('9. OCUPAÇÃO ATUAL', 'Estado', formData.companyState);
     addField('9. OCUPAÇÃO ATUAL', 'CEP', formData.companyZip);
-    addField('9. OCUPAÇÃO ATUAL', 'Data Início', formatDateToBrazilian(formData.companyStartDate));
+    addField('9. OCUPAÇÃO ATUAL', 'Data Início', formatDateForTXT(formData.companyStartDate));
     addField('9. OCUPAÇÃO ATUAL', 'Descrição das funções', formData.jobDescription);
     addField('9. OCUPAÇÃO ATUAL', 'Remuneração', formData.companySalary);
     addField('9. OCUPAÇÃO ATUAL', 'Ganho extra', formData.extraIncomeAmount);
@@ -1038,8 +1138,8 @@ export default function FormularioPage() {
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}CEP`, job.companyZip);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Telefone`, job.companyPhone);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}País`, job.companyCountry);
-        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data Início`, formatDateToBrazilian(job.startDate));
-        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data Término`, formatDateToBrazilian(job.endDate));
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data Início`, formatDateForTXT(job.startDate));
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data Término`, formatDateForTXT(job.endDate));
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Remuneração`, job.companySalary);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Nome do Supervisor`, job.supervisorName);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Descrição das funções`, job.jobDescription);
@@ -1051,11 +1151,26 @@ export default function FormularioPage() {
     if (formData.hasUniversity === 'SIM') {
       addField('11. UNIVERSITÁRIO', 'Instituição', formData.universityName);
       addField('11. UNIVERSITÁRIO', 'Endereço', formData.universityAddress);
-      addField('11. UNIVERSITÁRIO', 'Cidade/Estado', formData.universityCityState);
+      addField('11. UNIVERSITÁRIO', 'Cidade', formData.universityCity);
+      addField('11. UNIVERSITÁRIO', 'Estado', formData.universityState);
       addField('11. UNIVERSITÁRIO', 'CEP', formData.universityZip);
       addField('11. UNIVERSITÁRIO', 'Curso', formData.universityCourse);
-      addField('11. UNIVERSITÁRIO', 'Data Início', formatDateToBrazilian(formData.universityStartDate));
-      addField('11. UNIVERSITÁRIO', 'Data Conclusão', formatDateToBrazilian(formData.universityEndDate));
+      addField('11. UNIVERSITÁRIO', 'Data Início', formatDateForTXT(formData.universityStartDate));
+      addField('11. UNIVERSITÁRIO', 'Data Conclusão', formatDateForTXT(formData.universityEndDate));
+      // Escolas adicionais
+      if (formData.schoolsList.length > 0) {
+        formData.schoolsList.forEach((school, i) => {
+          const prefix = `Escola ${i + 2} - `;
+          addField('11. UNIVERSITÁRIO', `${prefix}Instituição`, school.name);
+          addField('11. UNIVERSITÁRIO', `${prefix}Endereço`, school.address);
+          addField('11. UNIVERSITÁRIO', `${prefix}Cidade`, school.city);
+          addField('11. UNIVERSITÁRIO', `${prefix}Estado`, school.state);
+          addField('11. UNIVERSITÁRIO', `${prefix}CEP`, school.zip);
+          addField('11. UNIVERSITÁRIO', `${prefix}Curso`, school.course);
+          addField('11. UNIVERSITÁRIO', `${prefix}Data Início`, formatDateForTXT(school.startDate));
+          addField('11. UNIVERSITÁRIO', `${prefix}Data Conclusão`, formatDateForTXT(school.endDate));
+        });
+      }
     }
 
     // Section 12
@@ -1161,10 +1276,10 @@ export default function FormularioPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm sm:text-base">SB</span>
+                <span className="text-white font-bold text-sm sm:text-base">IHS</span>
               </div>
               <div>
-                <h1 className="font-bold text-[#623AA2] text-sm sm:text-base">Formulário DS160</h1>
+                <h1 className="font-bold text-[#623AA2] text-sm sm:text-base">IHS Vistos - Formulário DS160</h1>
                 <p className="text-xs text-gray-500 hidden sm:block">Visto Americano</p>
               </div>
             </div>
@@ -2253,7 +2368,7 @@ export default function FormularioPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Está nos EUA?</Label>
+                  <Label>Está nos EUA? *</Label>
                   <Select
                     value={formData.fatherInUSA}
                     onValueChange={(value) => handleSelectChange('fatherInUSA', value)}
@@ -2267,6 +2382,48 @@ export default function FormularioPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                {formData.fatherInUSA === 'SIM' && (
+                  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                    <h5 className="font-medium text-gray-600 text-sm">Endereço do Pai nos EUA</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Endereço nos EUA *</Label>
+                        <Input
+                          value={formData.fatherUSAAddress}
+                          onChange={(e) => handleInputChange('fatherUSAAddress', e.target.value)}
+                          placeholder="Street, City, State"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Zip Code *</Label>
+                        <Input
+                          value={formData.fatherUSAZipCode}
+                          onChange={(e) => handleInputChange('fatherUSAZipCode', e.target.value)}
+                          placeholder="12345"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Telefone nos EUA *</Label>
+                        <Input
+                          value={formData.fatherUSAPhone}
+                          onChange={(e) => handleInputChange('fatherUSAPhone', e.target.value)}
+                          placeholder="+1 (XXX) XXX-XXXX"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>E-mail *</Label>
+                        <Input
+                          type="email"
+                          value={formData.fatherUSAEmail}
+                          onChange={(e) => handleInputChange('fatherUSAEmail', e.target.value.toLowerCase())}
+                          placeholder="email@exemplo.com"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4 pt-4 border-t">
@@ -2296,7 +2453,7 @@ export default function FormularioPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Está nos EUA?</Label>
+                  <Label>Está nos EUA? *</Label>
                   <Select
                     value={formData.motherInUSA}
                     onValueChange={(value) => handleSelectChange('motherInUSA', value)}
@@ -2310,6 +2467,48 @@ export default function FormularioPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                {formData.motherInUSA === 'SIM' && (
+                  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                    <h5 className="font-medium text-gray-600 text-sm">Endereço da Mãe nos EUA</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Endereço nos EUA *</Label>
+                        <Input
+                          value={formData.motherUSAAddress}
+                          onChange={(e) => handleInputChange('motherUSAAddress', e.target.value)}
+                          placeholder="Street, City, State"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Zip Code *</Label>
+                        <Input
+                          value={formData.motherUSAZipCode}
+                          onChange={(e) => handleInputChange('motherUSAZipCode', e.target.value)}
+                          placeholder="12345"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Telefone nos EUA *</Label>
+                        <Input
+                          value={formData.motherUSAPhone}
+                          onChange={(e) => handleInputChange('motherUSAPhone', e.target.value)}
+                          placeholder="+1 (XXX) XXX-XXXX"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>E-mail *</Label>
+                        <Input
+                          type="email"
+                          value={formData.motherUSAEmail}
+                          onChange={(e) => handleInputChange('motherUSAEmail', e.target.value.toLowerCase())}
+                          placeholder="email@exemplo.com"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Relatives in USA */}
@@ -2950,6 +3149,7 @@ export default function FormularioPage() {
 
               {formData.hasUniversity === 'SIM' && (
                 <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                  <h4 className="font-medium text-gray-700">Escola/Universidade 1</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Nome da instituição</Label>
@@ -3017,6 +3217,94 @@ export default function FormularioPage() {
                       />
                     </div>
                   </div>
+
+                  {/* Escolas adicionais */}
+                  {formData.schoolsList.map((school, index) => (
+                    <div key={index} className="space-y-4 pt-4 border-t">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-gray-700">Escola/Universidade {index + 2}</h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSchool(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Nome da instituição</Label>
+                          <Input
+                            value={school.name}
+                            onChange={(e) => updateSchool(index, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Curso</Label>
+                          <Input
+                            value={school.course}
+                            onChange={(e) => updateSchool(index, 'course', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Endereço</Label>
+                        <Input
+                          value={school.address}
+                          onChange={(e) => updateSchool(index, 'address', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Cidade</Label>
+                          <Input
+                            value={school.city}
+                            onChange={(e) => updateSchool(index, 'city', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Estado</Label>
+                          <Input
+                            value={school.state}
+                            onChange={(e) => updateSchool(index, 'state', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>CEP</Label>
+                          <Input
+                            value={school.zip}
+                            onChange={(e) => updateSchool(index, 'zip', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Data de Início</Label>
+                          <Input
+                            type="date"
+                            value={school.startDate}
+                            onChange={(e) => updateSchool(index, 'startDate', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Data de Conclusão</Label>
+                          <Input
+                            type="date"
+                            value={school.endDate}
+                            onChange={(e) => updateSchool(index, 'endDate', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <Button type="button" variant="outline" size="sm" onClick={addSchool}>
+                    <Plus className="h-4 w-4 mr-1" /> Adicionar outra escola/universidade
+                  </Button>
                 </div>
               )}
             </CardContent>

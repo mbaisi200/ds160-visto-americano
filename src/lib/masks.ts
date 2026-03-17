@@ -85,15 +85,47 @@ export function removeAccents(text: string): string {
 }
 
 // Format date for display (from ISO to Brazilian format)
+// Corrigido: trata a data como local para evitar problema de fuso horário
 export function formatDateToBrazilian(dateString: string): string {
   if (!dateString) return '';
-  const date = new Date(dateString);
+  
+  // Se já estiver no formato DD/MM/YYYY, retorna como está
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+    return dateString;
+  }
+  
+  // Se estiver no formato ISO (YYYY-MM-DD), divide diretamente para evitar problema de fuso
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  }
+  
+  // Fallback: tenta criar data e formatar
+  const date = new Date(dateString + 'T12:00:00'); // Adiciona meio-dia para evitar problema de fuso
   if (isNaN(date.getTime())) return dateString;
 
   const day = date.getDate().toString().padStart(2, '0');
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
+}
+
+// Format date for TXT output - returns date in DDMMYYYY format (sequential, no separators)
+export function formatDateForTXT(dateString: string): string {
+  if (!dateString) return '';
+  
+  // Se estiver no formato ISO (YYYY-MM-DD), converte para DDMMYYYY
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const [year, month, day] = dateString.split('-');
+    return `${day}${month}${year}`;
+  }
+  
+  // Se já estiver no formato DD/MM/YYYY, remove as barras
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+    return dateString.replace(/\//g, '');
+  }
+  
+  return dateString.replace(/\D/g, ''); // Remove tudo que não é dígito
 }
 
 // Format date for display
