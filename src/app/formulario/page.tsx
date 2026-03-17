@@ -54,6 +54,29 @@ import {
 import { removeAccents, formatDateToBrazilian, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF } from '@/lib/masks';
 import { toast } from 'sonner';
 
+interface PrevJob {
+  jobTitle: string;
+  companyName: string;
+  companyAddress: string;
+  companyNeighborhood: string;
+  companyCity: string;
+  companyState: string;
+  companyZip: string;
+  companyPhone: string;
+  companyCountry: string;
+  jobDescription: string;
+  companySalary: string;
+  supervisorName: string;
+  startDate: string;
+  endDate: string;
+}
+
+interface Companion {
+  lastName: string;
+  firstName: string;
+  relationship: string;
+}
+
 interface FormData {
   // Section 0
   applicationLocation: string;
@@ -106,6 +129,7 @@ interface FormData {
   // Section 6
   travelReason: string;
   hasTravelPlans: string;
+  knowsArrivalDate: string;
   arrivalDate: string;
   stayDuration: string;
   placesToVisit: string;
@@ -120,6 +144,7 @@ interface FormData {
   sponsorState: string;
   sponsorZipCode: string;
   sponsorCountry: string;
+  knowsUSAddress: string;
   usStreet: string;
   usNumber: string;
   usComplement: string;
@@ -130,7 +155,7 @@ interface FormData {
   travelCompanions: string;
   isGroup: string;
   groupName: string;
-  companionsInfo: string;
+  companionsList: Companion[];
   // Section 7
   usTravelHistory: string;
   visaIssueDate: string;
@@ -143,10 +168,12 @@ interface FormData {
   visaDenied: string;
   visaDeniedReason: string;
   // Section 8
-  fatherName: string;
+  fatherLastName: string;
+  fatherFirstName: string;
   fatherBirthDate: string;
   fatherInUSA: string;
-  motherName: string;
+  motherLastName: string;
+  motherFirstName: string;
   motherBirthDate: string;
   motherInUSA: string;
   relativesInUSA: string;
@@ -159,6 +186,7 @@ interface FormData {
   relativeZipCode: string;
   relativePhone: string;
   relativeEmail: string;
+  isCurrentlyMarried: string;
   spouseName: string;
   spouseBirthDate: string;
   spouseBirthCityState: string;
@@ -194,19 +222,7 @@ interface FormData {
   extraIncomeDescription: string;
   // Section 10
   hasPrevJob: string;
-  prevJobTitle: string;
-  prevCompanyName: string;
-  prevCompanyAddress: string;
-  prevCompanyNeighborhood: string;
-  prevCompanyCityState: string;
-  prevCompanyZip: string;
-  prevCompanyPhone: string;
-  prevCompanyCountry: string;
-  prevCompanyRole: string;
-  prevSupervisorName: string;
-  prevStartDate: string;
-  prevEndDate: string;
-  prevJobSummary: string;
+  prevJobsList: PrevJob[];
   // Section 11
   hasUniversity: string;
   universityName: string;
@@ -276,6 +292,7 @@ const initialFormData: FormData = {
   passportExpiryDate: '',
   travelReason: '',
   hasTravelPlans: '',
+  knowsArrivalDate: '',
   arrivalDate: '',
   stayDuration: '',
   placesToVisit: '',
@@ -290,6 +307,7 @@ const initialFormData: FormData = {
   sponsorState: '',
   sponsorZipCode: '',
   sponsorCountry: 'BRASIL',
+  knowsUSAddress: '',
   usStreet: '',
   usNumber: '',
   usComplement: '',
@@ -300,7 +318,7 @@ const initialFormData: FormData = {
   travelCompanions: '',
   isGroup: '',
   groupName: '',
-  companionsInfo: '',
+  companionsList: [],
   usTravelHistory: '',
   visaIssueDate: '',
   visaExpiryDate: '',
@@ -311,10 +329,12 @@ const initialFormData: FormData = {
   secondLastDepartureDate: '',
   visaDenied: '',
   visaDeniedReason: '',
-  fatherName: '',
+  fatherLastName: '',
+  fatherFirstName: '',
   fatherBirthDate: '',
   fatherInUSA: '',
-  motherName: '',
+  motherLastName: '',
+  motherFirstName: '',
   motherBirthDate: '',
   motherInUSA: '',
   relativesInUSA: '',
@@ -327,6 +347,7 @@ const initialFormData: FormData = {
   relativeZipCode: '',
   relativePhone: '',
   relativeEmail: '',
+  isCurrentlyMarried: '',
   spouseName: '',
   spouseBirthDate: '',
   spouseBirthCityState: '',
@@ -360,19 +381,7 @@ const initialFormData: FormData = {
   extraIncomeAmount: '',
   extraIncomeDescription: '',
   hasPrevJob: '',
-  prevJobTitle: '',
-  prevCompanyName: '',
-  prevCompanyAddress: '',
-  prevCompanyNeighborhood: '',
-  prevCompanyCityState: '',
-  prevCompanyZip: '',
-  prevCompanyPhone: '',
-  prevCompanyCountry: 'BRASIL',
-  prevCompanyRole: '',
-  prevSupervisorName: '',
-  prevStartDate: '',
-  prevEndDate: '',
-  prevJobSummary: '',
+  prevJobsList: [],
   hasUniversity: '',
   universityName: '',
   universityAddress: '',
@@ -569,6 +578,15 @@ export default function FormularioPage() {
 
     // Seção 3 - Endereço de Correspondência
     if (!formData.sameAddress) errors.push('Endereço de correspondência é o mesmo?');
+    
+    // Se NÃO para endereço de correspondência, campos são obrigatórios
+    if (formData.sameAddress === 'NAO') {
+      if (!formData.corrStreet) errors.push('Rua (End. Correspondência)');
+      if (!formData.corrNumber) errors.push('Número (End. Correspondência)');
+      if (!formData.corrCity) errors.push('Cidade (End. Correspondência)');
+      if (!formData.corrState) errors.push('Estado (End. Correspondência)');
+      if (!formData.corrZipCode) errors.push('CEP (End. Correspondência)');
+    }
 
     // Seção 4 - Redes Sociais
     if (!formData.hasSocialMedia) errors.push('Possui redes sociais?');
@@ -584,27 +602,46 @@ export default function FormularioPage() {
     // Seção 6 - Viagem
     if (!formData.travelReason) errors.push('Motivo da viagem');
     if (!formData.hasTravelPlans) errors.push('Possui planos específicos?');
+    if (!formData.knowsArrivalDate) errors.push('Sabe a data de chegada?');
+    if (formData.knowsArrivalDate === 'SIM' && !formData.arrivalDate) errors.push('Data de chegada pretendida');
+    if (!formData.knowsUSAddress) errors.push('Sabe o endereço nos EUA?');
 
     // Seção 7 - Vistos Anteriores
     if (!formData.usTravelHistory) errors.push('Já teve visto para os EUA?');
 
     // Seção 8 - Informações Familiares
+    // Pai - campos obrigatórios
+    if (!formData.fatherLastName) errors.push('Sobrenome do pai');
+    if (!formData.fatherFirstName) errors.push('Nome do pai');
+    if (!formData.fatherBirthDate) errors.push('Data de nascimento do pai');
+    
+    // Mãe - campos obrigatórios
+    if (!formData.motherLastName) errors.push('Sobrenome da mãe');
+    if (!formData.motherFirstName) errors.push('Nome da mãe');
+    if (!formData.motherBirthDate) errors.push('Data de nascimento da mãe');
+    
     if (!formData.relativesInUSA) errors.push('Possui parentes nos EUA?');
     
     // Se SIM para parentes nos EUA, campos são obrigatórios
     if (formData.relativesInUSA === 'SIM') {
       if (!formData.relativeName) errors.push('Nome do parente');
       if (!formData.relativeRelation) errors.push('Relação com o parente');
+      if (!formData.relativeEmail) errors.push('E-mail do parente');
     }
 
+    if (!formData.isCurrentlyMarried) errors.push('É casado(a) atualmente?');
+    
     if (!formData.wasMarried) errors.push('Já foi casado(a)?');
     
-    // Se SIM para casamento anterior, campos são obrigatórios
+    // Se SIM para casamento anterior, TODOS os campos são obrigatórios
     if (formData.wasMarried === 'SIM') {
       if (!formData.exSpouseName) errors.push('Nome do ex-cônjuge');
       if (!formData.exSpouseBirthDate) errors.push('Data de nascimento do ex-cônjuge');
+      if (!formData.exSpouseBirthCity) errors.push('Cidade de nascimento do ex-cônjuge');
+      if (!formData.exSpouseBirthState) errors.push('Estado de nascimento do ex-cônjuge');
       if (!formData.marriageDate) errors.push('Data do casamento');
       if (!formData.divorceDate) errors.push('Data do divórcio');
+      if (!formData.divorceCountry) errors.push('País do divórcio');
       if (!formData.divorceReason) errors.push('Motivo do divórcio');
     }
 
@@ -618,6 +655,26 @@ export default function FormularioPage() {
     if (!formData.companyStartDate) errors.push('Data de início');
     if (!formData.companySalary) errors.push('Remuneração');
     if (!formData.jobDescription) errors.push('Descrição das funções');
+
+    // Seção 10 - Ocupação Anterior
+    if (!formData.hasPrevJob) errors.push('Teve ocupação anterior?');
+    
+    // Se SIM para ocupação anterior, validar cada ocupação na lista
+    if (formData.hasPrevJob === 'SIM' && formData.prevJobsList.length > 0) {
+      formData.prevJobsList.forEach((job, index) => {
+        if (!job.jobTitle) errors.push(`Ocupação anterior ${index + 1}: Ocupação`);
+        if (!job.companyName) errors.push(`Ocupação anterior ${index + 1}: Nome da Empresa`);
+        if (!job.companyAddress) errors.push(`Ocupação anterior ${index + 1}: Endereço`);
+        if (!job.companyCity) errors.push(`Ocupação anterior ${index + 1}: Cidade`);
+        if (!job.companyState) errors.push(`Ocupação anterior ${index + 1}: Estado`);
+        if (!job.companyZip) errors.push(`Ocupação anterior ${index + 1}: CEP`);
+        if (!job.startDate) errors.push(`Ocupação anterior ${index + 1}: Data de início`);
+        if (!job.endDate) errors.push(`Ocupação anterior ${index + 1}: Data de término`);
+        if (!job.companySalary) errors.push(`Ocupação anterior ${index + 1}: Remuneração`);
+        if (!job.jobDescription) errors.push(`Ocupação anterior ${index + 1}: Descrição das funções`);
+        if (!job.supervisorName) errors.push(`Ocupação anterior ${index + 1}: Nome do supervisor`);
+      });
+    }
 
     // Seção 11 - Universitário
     if (!formData.hasUniversity) errors.push('Frequentou escola ou universidade?');
@@ -689,6 +746,71 @@ export default function FormularioPage() {
       ...prev,
       socialList: prev.socialList.map((item, i) =>
         i === index ? { ...item, [field]: field === 'platform' ? value : removeAccents(value.toUpperCase()) } : item
+      )
+    }));
+  };
+
+  // Companions management
+  const addCompanion = () => {
+    setFormData(prev => ({
+      ...prev,
+      companionsList: [...prev.companionsList, { lastName: '', firstName: '', relationship: '' }]
+    }));
+  };
+
+  const removeCompanion = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      companionsList: prev.companionsList.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateCompanion = (index: number, field: keyof Companion, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      companionsList: prev.companionsList.map((item, i) =>
+        i === index ? { ...item, [field]: removeAccents(value.toUpperCase()) } : item
+      )
+    }));
+  };
+
+  // Previous jobs management
+  const emptyPrevJob: PrevJob = {
+    jobTitle: '',
+    companyName: '',
+    companyAddress: '',
+    companyNeighborhood: '',
+    companyCity: '',
+    companyState: '',
+    companyZip: '',
+    companyPhone: '',
+    companyCountry: 'BRASIL',
+    jobDescription: '',
+    companySalary: '',
+    supervisorName: '',
+    startDate: '',
+    endDate: ''
+  };
+
+  const addPrevJob = () => {
+    setFormData(prev => ({
+      ...prev,
+      prevJobsList: [...prev.prevJobsList, { ...emptyPrevJob }]
+    }));
+  };
+
+  const removePrevJob = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      prevJobsList: prev.prevJobsList.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updatePrevJob = (index: number, field: keyof PrevJob, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      prevJobsList: prev.prevJobsList.map((item, i) =>
+        i === index ? { ...item, [field]: removeAccents(value.toUpperCase()) } : item
       )
     }));
   };
@@ -784,7 +906,10 @@ export default function FormularioPage() {
     // Section 6
     addField('6. VIAGEM', 'Motivo da viagem', formData.travelReason);
     addField('6. VIAGEM', 'Possui planos específicos', formData.hasTravelPlans);
-    addField('6. VIAGEM', 'Data de chegada pretendida', formData.arrivalDate);
+    addField('6. VIAGEM', 'Sabe a data de chegada', formData.knowsArrivalDate);
+    if (formData.knowsArrivalDate === 'SIM') {
+      addField('6. VIAGEM', 'Data de chegada pretendida', formatDateToBrazilian(formData.arrivalDate));
+    }
     addField('6. VIAGEM', 'Tempo de permanência', formData.stayDuration);
     addField('6. VIAGEM', 'Onde deseja visitar', formData.placesToVisit);
     addField('6. VIAGEM', 'Quem patrocina a viagem', formData.travelSponsor);
@@ -798,19 +923,26 @@ export default function FormularioPage() {
       addField('6. VIAGEM', 'CEP do Patrocinador', formData.sponsorZipCode);
       addField('6. VIAGEM', 'País do Patrocinador', formData.sponsorCountry);
     }
-    addField('6. VIAGEM', 'Rua (EUA)', formData.usStreet);
-    addField('6. VIAGEM', 'Número (EUA)', formData.usNumber);
-    addField('6. VIAGEM', 'Complemento (EUA)', formData.usComplement);
-    addField('6. VIAGEM', 'Cidade (EUA)', formData.usCity);
-    addField('6. VIAGEM', 'Estado (EUA)', formData.usState);
-    addField('6. VIAGEM', 'Zip Code (EUA)', formData.usZipCode);
+    addField('6. VIAGEM', 'Sabe o endereço nos EUA', formData.knowsUSAddress);
+    if (formData.knowsUSAddress === 'SIM') {
+      addField('6. VIAGEM', 'Rua (EUA)', formData.usStreet);
+      addField('6. VIAGEM', 'Número (EUA)', formData.usNumber);
+      addField('6. VIAGEM', 'Complemento (EUA)', formData.usComplement);
+      addField('6. VIAGEM', 'Cidade (EUA)', formData.usCity);
+      addField('6. VIAGEM', 'Estado (EUA)', formData.usState);
+      addField('6. VIAGEM', 'Zip Code (EUA)', formData.usZipCode);
+    }
     addField('6. VIAGEM', 'Companheiros de viagem', formData.travelCompanions);
     if (formData.travelCompanions === 'SIM') {
       addField('6. VIAGEM', 'É grupo/organização', formData.isGroup);
       if (formData.isGroup === 'SIM') {
         addField('6. VIAGEM', 'Nome do Grupo', formData.groupName);
-      } else {
-        addField('6. VIAGEM', 'Informações dos Companheiros', formData.companionsInfo);
+      } else if (formData.companionsList.length > 0) {
+        formData.companionsList.forEach((companion, i) => {
+          addField('6. VIAGEM', `Companheiro ${i + 1} - Sobrenome`, companion.lastName);
+          addField('6. VIAGEM', `Companheiro ${i + 1} - Nome`, companion.firstName);
+          addField('6. VIAGEM', `Companheiro ${i + 1} - Grau de parentesco`, companion.relationship);
+        });
       }
     }
 
@@ -831,10 +963,12 @@ export default function FormularioPage() {
     }
 
     // Section 8
-    addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Pai', formData.fatherName);
+    addField('8. INFORMAÇÕES FAMILIARES', 'Sobrenome do Pai', formData.fatherLastName);
+    addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Pai', formData.fatherFirstName);
     addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Pai', formatDateToBrazilian(formData.fatherBirthDate));
     addField('8. INFORMAÇÕES FAMILIARES', 'Pai nos EUA', formData.fatherInUSA);
-    addField('8. INFORMAÇÕES FAMILIARES', 'Nome da Mãe', formData.motherName);
+    addField('8. INFORMAÇÕES FAMILIARES', 'Sobrenome da Mãe', formData.motherLastName);
+    addField('8. INFORMAÇÕES FAMILIARES', 'Nome da Mãe', formData.motherFirstName);
     addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Mãe', formatDateToBrazilian(formData.motherBirthDate));
     addField('8. INFORMAÇÕES FAMILIARES', 'Mãe nos EUA', formData.motherInUSA);
     addField('8. INFORMAÇÕES FAMILIARES', 'Parentes nos EUA', formData.relativesInUSA);
@@ -847,18 +981,23 @@ export default function FormularioPage() {
       addField('8. INFORMAÇÕES FAMILIARES', 'Estado', formData.relativeState);
       addField('8. INFORMAÇÕES FAMILIARES', 'Zip Code', formData.relativeZipCode);
       addField('8. INFORMAÇÕES FAMILIARES', 'Telefone', formData.relativePhone);
-      addField('8. INFORMAÇÕES FAMILIARES', 'E-mail', formData.relativeEmail);
+      addField('8. INFORMAÇÕES FAMILIARES', 'E-mail do Parente', formData.relativeEmail);
     }
-    addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Cônjuge', formData.spouseName);
-    addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Cônjuge', formatDateToBrazilian(formData.spouseBirthDate));
-    addField('8. INFORMAÇÕES FAMILIARES', 'Cidade/Estado Nasc. Cônjuge', formData.spouseBirthCityState);
-    addField('8. INFORMAÇÕES FAMILIARES', 'Reside mesmo endereço', formData.spouseSameAddress);
-    if (formData.spouseSameAddress === 'NAO') {
-      addField('8. INFORMAÇÕES FAMILIARES', 'Endereço Cônjuge', formData.spouseAddress);
-      addField('8. INFORMAÇÕES FAMILIARES', 'Bairro Cônjuge', formData.spouseNeighborhood);
-      addField('8. INFORMAÇÕES FAMILIARES', 'Cidade Cônjuge', formData.spouseCity);
-      addField('8. INFORMAÇÕES FAMILIARES', 'Estado Cônjuge', formData.spouseState);
-      addField('8. INFORMAÇÕES FAMILIARES', 'CEP Cônjuge', formData.spouseZipCode);
+    addField('8. INFORMAÇÕES FAMILIARES', 'É casado(a) atualmente', formData.isCurrentlyMarried);
+    if (formData.isCurrentlyMarried === 'SIM') {
+      addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Cônjuge', formData.spouseName);
+      addField('8. INFORMAÇÕES FAMILIARES', 'Data Nasc. Cônjuge', formatDateToBrazilian(formData.spouseBirthDate));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Cidade/Estado Nasc. Cônjuge', formData.spouseBirthCityState);
+      addField('8. INFORMAÇÕES FAMILIARES', 'Reside mesmo endereço', formData.spouseSameAddress);
+      if (formData.spouseSameAddress === 'NAO') {
+        addField('8. INFORMAÇÕES FAMILIARES', 'Rua Cônjuge', formData.spouseStreet);
+        addField('8. INFORMAÇÕES FAMILIARES', 'Número Cônjuge', formData.spouseNumber);
+        addField('8. INFORMAÇÕES FAMILIARES', 'Complemento Cônjuge', formData.spouseComplement);
+        addField('8. INFORMAÇÕES FAMILIARES', 'Bairro Cônjuge', formData.spouseNeighborhood);
+        addField('8. INFORMAÇÕES FAMILIARES', 'Cidade Cônjuge', formData.spouseCity);
+        addField('8. INFORMAÇÕES FAMILIARES', 'Estado Cônjuge', formData.spouseState);
+        addField('8. INFORMAÇÕES FAMILIARES', 'CEP Cônjuge', formData.spouseZipCode);
+      }
     }
     addField('8. INFORMAÇÕES FAMILIARES', 'Já foi casado', formData.wasMarried);
     if (formData.wasMarried === 'SIM') {
@@ -887,20 +1026,24 @@ export default function FormularioPage() {
 
     // Section 10
     addField('10. OCUPAÇÃO ANTERIOR', 'Teve ocupação anterior', formData.hasPrevJob);
-    if (formData.hasPrevJob === 'SIM') {
-      addField('10. OCUPAÇÃO ANTERIOR', 'Ocupação', formData.prevJobTitle);
-      addField('10. OCUPAÇÃO ANTERIOR', 'Empresa', formData.prevCompanyName);
-      addField('10. OCUPAÇÃO ANTERIOR', 'Endereço', formData.prevCompanyAddress);
-      addField('10. OCUPAÇÃO ANTERIOR', 'Bairro', formData.prevCompanyNeighborhood);
-      addField('10. OCUPAÇÃO ANTERIOR', 'Cidade/Estado', formData.prevCompanyCityState);
-      addField('10. OCUPAÇÃO ANTERIOR', 'CEP', formData.prevCompanyZip);
-      addField('10. OCUPAÇÃO ANTERIOR', 'Telefone', formData.prevCompanyPhone);
-      addField('10. OCUPAÇÃO ANTERIOR', 'País', formData.prevCompanyCountry);
-      addField('10. OCUPAÇÃO ANTERIOR', 'Cargo', formData.prevCompanyRole);
-      addField('10. OCUPAÇÃO ANTERIOR', 'Supervisor', formData.prevSupervisorName);
-      addField('10. OCUPAÇÃO ANTERIOR', 'Data Início', formatDateToBrazilian(formData.prevStartDate));
-      addField('10. OCUPAÇÃO ANTERIOR', 'Data Término', formatDateToBrazilian(formData.prevEndDate));
-      addField('10. OCUPAÇÃO ANTERIOR', 'Resumo funções', formData.prevJobSummary);
+    if (formData.hasPrevJob === 'SIM' && formData.prevJobsList.length > 0) {
+      formData.prevJobsList.forEach((job, i) => {
+        const prefix = formData.prevJobsList.length > 1 ? `Ocupação ${i + 1} - ` : '';
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Ocupação`, job.jobTitle);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Empresa`, job.companyName);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Endereço`, job.companyAddress);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Bairro`, job.companyNeighborhood);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Cidade`, job.companyCity);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Estado`, job.companyState);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}CEP`, job.companyZip);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Telefone`, job.companyPhone);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}País`, job.companyCountry);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data Início`, formatDateToBrazilian(job.startDate));
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data Término`, formatDateToBrazilian(job.endDate));
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Remuneração`, job.companySalary);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Nome do Supervisor`, job.supervisorName);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Descrição das funções`, job.jobDescription);
+      });
     }
 
     // Section 11
@@ -1391,7 +1534,7 @@ export default function FormularioPage() {
                 <div className="space-y-4 pl-4 border-l-2 border-gray-200">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Rua</Label>
+                      <Label>Rua *</Label>
                       <Input
                         value={formData.corrStreet}
                         onChange={(e) => handleInputChange('corrStreet', e.target.value)}
@@ -1399,7 +1542,7 @@ export default function FormularioPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Número</Label>
+                        <Label>Número *</Label>
                         <Input
                           value={formData.corrNumber}
                           onChange={(e) => handleInputChange('corrNumber', e.target.value)}
@@ -1417,21 +1560,21 @@ export default function FormularioPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>Cidade</Label>
+                      <Label>Cidade *</Label>
                       <Input
                         value={formData.corrCity}
                         onChange={(e) => handleInputChange('corrCity', e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Estado</Label>
+                      <Label>Estado *</Label>
                       <Input
                         value={formData.corrState}
                         onChange={(e) => handleInputChange('corrState', e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>CEP</Label>
+                      <Label>CEP *</Label>
                       <Input
                         value={formData.corrZipCode}
                         onChange={(e) => handleInputChange('corrZipCode', e.target.value)}
@@ -1624,13 +1767,33 @@ export default function FormularioPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Data de chegada pretendida</Label>
-                  <Input
-                    type="date"
-                    value={formData.arrivalDate}
-                    onChange={(e) => handleInputChange('arrivalDate', e.target.value)}
-                  />
+                  <Label>Sabe a data de chegada? *</Label>
+                  <Select
+                    value={formData.knowsArrivalDate}
+                    onValueChange={(value) => handleSelectChange('knowsArrivalDate', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione SIM ou NÃO" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SIM">SIM</SelectItem>
+                      <SelectItem value="NAO">NÃO (Não sei ainda)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+                {formData.knowsArrivalDate === 'SIM' && (
+                  <div className="space-y-2">
+                    <Label>Data de chegada pretendida *</Label>
+                    <Input
+                      type="date"
+                      value={formData.arrivalDate}
+                      onChange={(e) => handleInputChange('arrivalDate', e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Tempo de permanência</Label>
                   <Input
@@ -1759,55 +1922,75 @@ export default function FormularioPage() {
 
               {/* US Address */}
               <div className="pt-4 border-t">
-                <h4 className="font-medium text-gray-700 mb-4">Endereço nos EUA (Hotel)</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Rua</Label>
-                    <Input
-                      value={formData.usStreet}
-                      onChange={(e) => handleInputChange('usStreet', e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Número</Label>
-                      <Input
-                        value={formData.usNumber}
-                        onChange={(e) => handleInputChange('usNumber', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Complemento</Label>
-                      <Input
-                        value={formData.usComplement}
-                        onChange={(e) => handleInputChange('usComplement', e.target.value)}
-                      />
-                    </div>
-                  </div>
+                <div className="space-y-2 mb-4">
+                  <Label>Sabe o endereço onde ficará nos EUA? *</Label>
+                  <Select
+                    value={formData.knowsUSAddress}
+                    onValueChange={(value) => handleSelectChange('knowsUSAddress', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione SIM ou NÃO" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SIM">SIM</SelectItem>
+                      <SelectItem value="NAO">NÃO (Não sei ainda)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                  <div className="space-y-2">
-                    <Label>Cidade</Label>
-                    <Input
-                      value={formData.usCity}
-                      onChange={(e) => handleInputChange('usCity', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Estado</Label>
-                    <Input
-                      value={formData.usState}
-                      onChange={(e) => handleInputChange('usState', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Zip Code</Label>
-                    <Input
-                      value={formData.usZipCode}
-                      onChange={(e) => handleInputChange('usZipCode', e.target.value)}
-                    />
-                  </div>
-                </div>
+
+                {formData.knowsUSAddress === 'SIM' && (
+                  <>
+                    <h4 className="font-medium text-gray-700 mb-4">Endereço nos EUA (Hotel)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Rua</Label>
+                        <Input
+                          value={formData.usStreet}
+                          onChange={(e) => handleInputChange('usStreet', e.target.value)}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Número</Label>
+                          <Input
+                            value={formData.usNumber}
+                            onChange={(e) => handleInputChange('usNumber', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Complemento</Label>
+                          <Input
+                            value={formData.usComplement}
+                            onChange={(e) => handleInputChange('usComplement', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                      <div className="space-y-2">
+                        <Label>Cidade</Label>
+                        <Input
+                          value={formData.usCity}
+                          onChange={(e) => handleInputChange('usCity', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Estado</Label>
+                        <Input
+                          value={formData.usState}
+                          onChange={(e) => handleInputChange('usState', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Zip Code</Label>
+                        <Input
+                          value={formData.usZipCode}
+                          onChange={(e) => handleInputChange('usZipCode', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Travel Companions */}
@@ -1855,13 +2038,52 @@ export default function FormularioPage() {
                         />
                       </div>
                     ) : formData.isGroup === 'NAO' && (
-                      <div className="space-y-2">
-                        <Label>Companheiros (nome e parentesco)</Label>
-                        <Textarea
-                          value={formData.companionsInfo}
-                          onChange={(e) => handleInputChange('companionsInfo', e.target.value)}
-                          placeholder="Ex: Maria Silva - Esposa, João Silva - Filho"
-                        />
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-gray-700">Companheiros de viagem</h4>
+                          <Button type="button" variant="outline" size="sm" onClick={addCompanion}>
+                            <Plus className="h-4 w-4 mr-1" /> Adicionar
+                          </Button>
+                        </div>
+                        {formData.companionsList.map((companion, index) => (
+                          <div key={index} className="p-4 bg-gray-50 rounded-lg space-y-4">
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-sm">Companheiro {index + 1}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeCompanion(index)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-2">
+                                <Label>Sobrenome da pessoa</Label>
+                                <Input
+                                  value={companion.lastName}
+                                  onChange={(e) => updateCompanion(index, 'lastName', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Nome da pessoa</Label>
+                                <Input
+                                  value={companion.firstName}
+                                  onChange={(e) => updateCompanion(index, 'firstName', e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Grau de parentesco</Label>
+                                <Input
+                                  value={companion.relationship}
+                                  onChange={(e) => updateCompanion(index, 'relationship', e.target.value)}
+                                  placeholder="Ex: ESPOSA, FILHO, IRMAO"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -2007,15 +2229,22 @@ export default function FormularioPage() {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-700">Pai</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Nome completo</Label>
+                  <div className="space-y-2">
+                    <Label>Sobrenome do pai *</Label>
                     <Input
-                      value={formData.fatherName}
-                      onChange={(e) => handleInputChange('fatherName', e.target.value)}
+                      value={formData.fatherLastName}
+                      onChange={(e) => handleInputChange('fatherLastName', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Data de nascimento</Label>
+                    <Label>Nome do pai *</Label>
+                    <Input
+                      value={formData.fatherFirstName}
+                      onChange={(e) => handleInputChange('fatherFirstName', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Data de nascimento *</Label>
                     <Input
                       type="date"
                       value={formData.fatherBirthDate}
@@ -2043,15 +2272,22 @@ export default function FormularioPage() {
               <div className="space-y-4 pt-4 border-t">
                 <h4 className="font-medium text-gray-700">Mãe</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Nome completo</Label>
+                  <div className="space-y-2">
+                    <Label>Sobrenome da mãe *</Label>
                     <Input
-                      value={formData.motherName}
-                      onChange={(e) => handleInputChange('motherName', e.target.value)}
+                      value={formData.motherLastName}
+                      onChange={(e) => handleInputChange('motherLastName', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Data de nascimento</Label>
+                    <Label>Nome da mãe *</Label>
+                    <Input
+                      value={formData.motherFirstName}
+                      onChange={(e) => handleInputChange('motherFirstName', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Data de nascimento *</Label>
                     <Input
                       type="date"
                       value={formData.motherBirthDate}
@@ -2078,264 +2314,316 @@ export default function FormularioPage() {
 
               {/* Relatives in USA */}
               <div className="space-y-4 pt-4 border-t">
-<div className="space-y-2">
-  <Label>Possui parentes nos EUA? *</Label>
-  <Select
-    value={formData.relativesInUSA}
-    onValueChange={(value) => handleSelectChange('relativesInUSA', value)}
-   
-  >
-    <SelectTrigger>
-      <SelectValue placeholder="Selecione SIM ou NÃO" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="NAO">NÃO</SelectItem>
-      <SelectItem value="SIM">SIM</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
-
-{formData.relativesInUSA === 'SIM' && (
-  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label>Nome completo *</Label>
-        <Input
-          value={formData.relativeName}
-          onChange={(e) => handleInputChange('relativeName', e.target.value)}
-         
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Relação *</Label>
-        <Input
-          value={formData.relativeRelation}
-          onChange={(e) => handleInputChange('relativeRelation', e.target.value)}
-         
-        />
-      </div>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label>Empresa</Label>
-        <Input
-          value={formData.relativeCompany}
-          onChange={(e) => handleInputChange('relativeCompany', e.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Telefone</Label>
-        <Input
-          value={formData.relativePhone}
-          onChange={(e) => handleInputChange('relativePhone', e.target.value)}
-        />
-      </div>
-    </div>
-  </div>
-)}
-              </div>
-
-              {/* Já foi casado - MOVED HERE */}
-              <div className="space-y-4 pt-4 border-t">
-<div className="space-y-2">
-  <Label>Já foi casado(a)? *</Label>
-  <Select
-    value={formData.wasMarried}
-    onValueChange={(value) => handleSelectChange('wasMarried', value)}
-   
-  >
-    <SelectTrigger>
-      <SelectValue placeholder="Selecione SIM ou NÃO" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="NAO">NÃO</SelectItem>
-      <SelectItem value="SIM">SIM</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
-
-{formData.wasMarried === 'SIM' && (
-  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label>Nome do ex-cônjuge *</Label>
-        <Input
-          value={formData.exSpouseName}
-          onChange={(e) => handleInputChange('exSpouseName', e.target.value)}
-         
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Data de nascimento *</Label>
-        <Input
-          type="date"
-          value={formData.exSpouseBirthDate}
-          onChange={(e) => handleInputChange('exSpouseBirthDate', e.target.value)}
-         
-        />
-      </div>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label>Cidade de Nascimento</Label>
-        <Input
-          value={formData.exSpouseBirthCity}
-          onChange={(e) => handleInputChange('exSpouseBirthCity', e.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Estado de Nascimento</Label>
-        <Input
-          value={formData.exSpouseBirthState}
-          onChange={(e) => handleInputChange('exSpouseBirthState', e.target.value)}
-        />
-      </div>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label>Data do casamento *</Label>
-        <Input
-          type="date"
-          value={formData.marriageDate}
-          onChange={(e) => handleInputChange('marriageDate', e.target.value)}
-         
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Data do divórcio *</Label>
-        <Input
-          type="date"
-          value={formData.divorceDate}
-          onChange={(e) => handleInputChange('divorceDate', e.target.value)}
-         
-        />
-      </div>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label>País do divórcio</Label>
-        <Input
-          value={formData.divorceCountry}
-          onChange={(e) => handleInputChange('divorceCountry', e.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Motivo do divórcio *</Label>
-        <Textarea
-          value={formData.divorceReason}
-          onChange={(e) => handleInputChange('divorceReason', e.target.value)}
-         
-        />
-      </div>
-    </div>
-  </div>
-)}
-              </div>
-
-              {/* Spouse */}
-              <div className="space-y-4 pt-4 border-t">
-<h4 className="font-medium text-gray-700">Cônjuge</h4>
-<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-  <div className="space-y-2 md:col-span-2">
-    <Label>Nome completo</Label>
-    <Input
-      value={formData.spouseName}
-      onChange={(e) => handleInputChange('spouseName', e.target.value)}
-    />
-  </div>
-  <div className="space-y-2">
-    <Label>Data de nascimento</Label>
-    <Input
-      type="date"
-      value={formData.spouseBirthDate}
-      onChange={(e) => handleInputChange('spouseBirthDate', e.target.value)}
-    />
-  </div>
-</div>
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  <div className="space-y-2">
-    <Label>Cidade/Estado de nascimento</Label>
-    <Input
-      value={formData.spouseBirthCityState}
-      onChange={(e) => handleInputChange('spouseBirthCityState', e.target.value)}
-    />
-  </div>
-  <div className="space-y-2">
-    <Label>Reside no mesmo endereço?</Label>
-    <Select
-      value={formData.spouseSameAddress}
-      onValueChange={(value) => handleSelectChange('spouseSameAddress', value)}
-    >
-      <SelectTrigger>
-        <SelectValue placeholder="Selecione" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="SIM">SIM</SelectItem>
-        <SelectItem value="NAO">NÃO</SelectItem>
-      </SelectContent>
-    </Select>
-  </div>
-</div>
-              </div>
-
-              {formData.spouseSameAddress === 'NAO' && (
-                <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-                  <h4 className="font-medium text-gray-700">Endereço do Cônjuge</h4>
-                  <div className="space-y-2">
-                    <Label>Rua</Label>
-                    <Input
-                      value={formData.spouseStreet}
-                      onChange={(e) => handleInputChange('spouseStreet', e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Número</Label>
-                      <Input
-                        value={formData.spouseNumber}
-                        onChange={(e) => handleInputChange('spouseNumber', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Complemento</Label>
-                      <Input
-                        value={formData.spouseComplement}
-                        onChange={(e) => handleInputChange('spouseComplement', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Bairro</Label>
-                      <Input
-                        value={formData.spouseNeighborhood}
-                        onChange={(e) => handleInputChange('spouseNeighborhood', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Cidade</Label>
-                      <Input
-                        value={formData.spouseCity}
-                        onChange={(e) => handleInputChange('spouseCity', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Estado</Label>
-                      <Input
-                        value={formData.spouseState}
-                        onChange={(e) => handleInputChange('spouseState', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>CEP</Label>
-                      <Input
-                        value={formData.spouseZipCode}
-                        onChange={(e) => handleInputChange('spouseZipCode', e.target.value)}
-                      />
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Possui parentes nos EUA? *</Label>
+                  <Select
+                    value={formData.relativesInUSA}
+                    onValueChange={(value) => handleSelectChange('relativesInUSA', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione SIM ou NÃO" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NAO">NÃO</SelectItem>
+                      <SelectItem value="SIM">SIM</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
+
+                {formData.relativesInUSA === 'SIM' && (
+                  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Nome completo *</Label>
+                        <Input
+                          value={formData.relativeName}
+                          onChange={(e) => handleInputChange('relativeName', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Relação *</Label>
+                        <Input
+                          value={formData.relativeRelation}
+                          onChange={(e) => handleInputChange('relativeRelation', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>E-mail do parente *</Label>
+                        <Input
+                          type="email"
+                          value={formData.relativeEmail}
+                          onChange={(e) => handleInputChange('relativeEmail', e.target.value.toLowerCase())}
+                          placeholder="exemplo@email.com"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Telefone</Label>
+                        <Input
+                          value={formData.relativePhone}
+                          onChange={(e) => handleInputChange('relativePhone', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Empresa</Label>
+                        <Input
+                          value={formData.relativeCompany}
+                          onChange={(e) => handleInputChange('relativeCompany', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Endereço</Label>
+                        <Input
+                          value={formData.relativeAddress}
+                          onChange={(e) => handleInputChange('relativeAddress', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Cidade</Label>
+                        <Input
+                          value={formData.relativeCity}
+                          onChange={(e) => handleInputChange('relativeCity', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Estado</Label>
+                        <Input
+                          value={formData.relativeState}
+                          onChange={(e) => handleInputChange('relativeState', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Zip Code</Label>
+                        <Input
+                          value={formData.relativeZipCode}
+                          onChange={(e) => handleInputChange('relativeZipCode', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* É casado atualmente? */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-2">
+                  <Label>É casado(a) atualmente? *</Label>
+                  <Select
+                    value={formData.isCurrentlyMarried}
+                    onValueChange={(value) => handleSelectChange('isCurrentlyMarried', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione SIM ou NÃO" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NAO">NÃO</SelectItem>
+                      <SelectItem value="SIM">SIM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formData.isCurrentlyMarried === 'SIM' && (
+                  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                    <h4 className="font-medium text-gray-700">Cônjuge</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Nome completo do cônjuge</Label>
+                        <Input
+                          value={formData.spouseName}
+                          onChange={(e) => handleInputChange('spouseName', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Data de nascimento</Label>
+                        <Input
+                          type="date"
+                          value={formData.spouseBirthDate}
+                          onChange={(e) => handleInputChange('spouseBirthDate', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Cidade/Estado de nascimento</Label>
+                        <Input
+                          value={formData.spouseBirthCityState}
+                          onChange={(e) => handleInputChange('spouseBirthCityState', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Reside no mesmo endereço?</Label>
+                        <Select
+                          value={formData.spouseSameAddress}
+                          onValueChange={(value) => handleSelectChange('spouseSameAddress', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="SIM">SIM</SelectItem>
+                            <SelectItem value="NAO">NÃO</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {formData.spouseSameAddress === 'NAO' && (
+                      <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                        <h4 className="font-medium text-gray-700">Endereço do Cônjuge</h4>
+                        <div className="space-y-2">
+                          <Label>Rua</Label>
+                          <Input
+                            value={formData.spouseStreet}
+                            onChange={(e) => handleInputChange('spouseStreet', e.target.value)}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label>Número</Label>
+                            <Input
+                              value={formData.spouseNumber}
+                              onChange={(e) => handleInputChange('spouseNumber', e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Complemento</Label>
+                            <Input
+                              value={formData.spouseComplement}
+                              onChange={(e) => handleInputChange('spouseComplement', e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Bairro</Label>
+                            <Input
+                              value={formData.spouseNeighborhood}
+                              onChange={(e) => handleInputChange('spouseNeighborhood', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label>Cidade</Label>
+                            <Input
+                              value={formData.spouseCity}
+                              onChange={(e) => handleInputChange('spouseCity', e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Estado</Label>
+                            <Input
+                              value={formData.spouseState}
+                              onChange={(e) => handleInputChange('spouseState', e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>CEP</Label>
+                            <Input
+                              value={formData.spouseZipCode}
+                              onChange={(e) => handleInputChange('spouseZipCode', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Já foi casado */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-2">
+                  <Label>Já foi casado(a) anteriormente? *</Label>
+                  <Select
+                    value={formData.wasMarried}
+                    onValueChange={(value) => handleSelectChange('wasMarried', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione SIM ou NÃO" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NAO">NÃO</SelectItem>
+                      <SelectItem value="SIM">SIM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formData.wasMarried === 'SIM' && (
+                  <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Nome do ex-cônjuge *</Label>
+                        <Input
+                          value={formData.exSpouseName}
+                          onChange={(e) => handleInputChange('exSpouseName', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Data de nascimento *</Label>
+                        <Input
+                          type="date"
+                          value={formData.exSpouseBirthDate}
+                          onChange={(e) => handleInputChange('exSpouseBirthDate', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Cidade de Nascimento *</Label>
+                        <Input
+                          value={formData.exSpouseBirthCity}
+                          onChange={(e) => handleInputChange('exSpouseBirthCity', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Estado de Nascimento *</Label>
+                        <Input
+                          value={formData.exSpouseBirthState}
+                          onChange={(e) => handleInputChange('exSpouseBirthState', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Data do casamento *</Label>
+                        <Input
+                          type="date"
+                          value={formData.marriageDate}
+                          onChange={(e) => handleInputChange('marriageDate', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Data do divórcio *</Label>
+                        <Input
+                          type="date"
+                          value={formData.divorceDate}
+                          onChange={(e) => handleInputChange('divorceDate', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>País do divórcio *</Label>
+                        <Input
+                          value={formData.divorceCountry}
+                          onChange={(e) => handleInputChange('divorceCountry', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Motivo do divórcio *</Label>
+                        <Textarea
+                          value={formData.divorceReason}
+                          onChange={(e) => handleInputChange('divorceReason', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -2468,7 +2756,7 @@ export default function FormularioPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Teve ocupação anterior nos últimos 5 anos?</Label>
+                <Label>Teve ocupação anterior nos últimos 5 anos? *</Label>
                 <Select
                   value={formData.hasPrevJob}
                   onValueChange={(value) => handleSelectChange('hasPrevJob', value)}
@@ -2484,50 +2772,151 @@ export default function FormularioPage() {
               </div>
 
               {formData.hasPrevJob === 'SIM' && (
-                <div className="space-y-4 pl-4 border-l-2 border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Ocupação</Label>
-                      <Input
-                        value={formData.prevJobTitle}
-                        onChange={(e) => handleInputChange('prevJobTitle', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Nome da Empresa</Label>
-                      <Input
-                        value={formData.prevCompanyName}
-                        onChange={(e) => handleInputChange('prevCompanyName', e.target.value)}
-                      />
-                    </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-gray-700">Ocupações Anteriores</h4>
+                    <Button type="button" variant="outline" size="sm" onClick={addPrevJob}>
+                      <Plus className="h-4 w-4 mr-1" /> Adicionar Ocupação
+                    </Button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Data de Início</Label>
-                      <Input
-                        type="date"
-                        value={formData.prevStartDate}
-                        onChange={(e) => handleInputChange('prevStartDate', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Data de Término</Label>
-                      <Input
-                        type="date"
-                        value={formData.prevEndDate}
-                        onChange={(e) => handleInputChange('prevEndDate', e.target.value)}
-                      />
-                    </div>
-                  </div>
+                  {formData.prevJobsList.length === 0 && (
+                    <p className="text-sm text-gray-500">Clique em &quot;Adicionar Ocupação&quot; para incluir uma ocupação anterior.</p>
+                  )}
 
-                  <div className="space-y-2">
-                    <Label>Resumo das funções</Label>
-                    <Textarea
-                      value={formData.prevJobSummary}
-                      onChange={(e) => handleInputChange('prevJobSummary', e.target.value)}
-                    />
-                  </div>
+                  {formData.prevJobsList.map((job, index) => (
+                    <div key={index} className="p-4 bg-gray-50 rounded-lg space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-sm">Ocupação Anterior {index + 1}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removePrevJob(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Ocupação *</Label>
+                          <Input
+                            value={job.jobTitle}
+                            onChange={(e) => updatePrevJob(index, 'jobTitle', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Nome da Empresa *</Label>
+                          <Input
+                            value={job.companyName}
+                            onChange={(e) => updatePrevJob(index, 'companyName', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Endereço *</Label>
+                        <Input
+                          value={job.companyAddress}
+                          onChange={(e) => updatePrevJob(index, 'companyAddress', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Bairro</Label>
+                          <Input
+                            value={job.companyNeighborhood}
+                            onChange={(e) => updatePrevJob(index, 'companyNeighborhood', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Cidade *</Label>
+                          <Input
+                            value={job.companyCity}
+                            onChange={(e) => updatePrevJob(index, 'companyCity', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Estado *</Label>
+                          <Input
+                            value={job.companyState}
+                            onChange={(e) => updatePrevJob(index, 'companyState', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>CEP *</Label>
+                          <Input
+                            value={job.companyZip}
+                            onChange={(e) => updatePrevJob(index, 'companyZip', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Telefone</Label>
+                          <Input
+                            value={job.companyPhone}
+                            onChange={(e) => updatePrevJob(index, 'companyPhone', e.target.value)}
+                            placeholder="(00) 00000-0000"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>País</Label>
+                          <Input
+                            value={job.companyCountry}
+                            onChange={(e) => updatePrevJob(index, 'companyCountry', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Data de Início *</Label>
+                          <Input
+                            type="date"
+                            value={job.startDate}
+                            onChange={(e) => updatePrevJob(index, 'startDate', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Data de Término *</Label>
+                          <Input
+                            type="date"
+                            value={job.endDate}
+                            onChange={(e) => updatePrevJob(index, 'endDate', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Nome completo do Supervisor *</Label>
+                          <Input
+                            value={job.supervisorName}
+                            onChange={(e) => updatePrevJob(index, 'supervisorName', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Remuneração (R$) *</Label>
+                          <Input
+                            value={job.companySalary}
+                            onChange={(e) => updatePrevJob(index, 'companySalary', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Descrição das funções *</Label>
+                        <Textarea
+                          value={job.jobDescription}
+                          onChange={(e) => updatePrevJob(index, 'jobDescription', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
