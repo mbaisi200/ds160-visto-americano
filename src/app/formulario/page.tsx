@@ -439,6 +439,7 @@ export default function FormularioPage() {
   const [success, setSuccess] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showReview, setShowReview] = useState(false);
   const [loadingForm, setLoadingForm] = useState(true);
   const [existingFormId, setExistingFormId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -786,15 +787,28 @@ export default function FormularioPage() {
     }
 
     setValidationErrors([]);
+    setShowReview(true);
+  };
+
+  const handleConfirmSubmit = async () => {
     setSubmitting(true);
 
     try {
       // Nome completo do cliente
       const nomeCompleto = `${formData.firstName} ${formData.lastName}`.trim();
 
+      // Limpar dados antes de salvar - garantir que arrays são arrays
+      const cleanedData = {
+        ...formData,
+        socialList: Array.isArray(formData.socialList) ? formData.socialList : [],
+        prevJobsList: Array.isArray(formData.prevJobsList) ? formData.prevJobsList : [],
+        companionsList: Array.isArray(formData.companionsList) ? formData.companionsList : [],
+        schoolsList: Array.isArray(formData.schoolsList) ? formData.schoolsList : [],
+      };
+
       if (existingFormId) {
         await updateDoc(doc(db, 'ds160_forms', existingFormId), {
-          dados: formData,
+          dados: cleanedData,
           nome: nomeCompleto,
           updatedAt: serverTimestamp(),
           status: 'pendente'
@@ -804,13 +818,14 @@ export default function FormularioPage() {
           userId: user?.uid,
           cpf: userData?.cpf?.replace(/\D/g, ''),
           nome: nomeCompleto,
-          dados: formData,
+          dados: cleanedData,
           createdAt: serverTimestamp(),
           status: 'pendente'
         });
       }
 
       setSuccess(true);
+      setShowReview(false);
       toast.success('Formulário enviado com sucesso!');
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -1265,6 +1280,185 @@ export default function FormularioPage() {
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-[#623AA2] mx-auto" />
           <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Tela de Revisão antes do envio
+  if (showReview) {
+    const fmt = (dateString: string) => {
+      if (!dateString) return '-';
+      const parts = dateString.split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      return dateString;
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold">SB</span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-[#623AA2]">SB Viagens e Turismo</h1>
+                  <p className="text-sm text-gray-500">Revise seus dados antes de enviar</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Alert className="mb-6 border-yellow-300 bg-yellow-50">
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800">
+              <strong>Atenção:</strong> Confira todos os dados abaixo antes de enviar o formulário. Se houver algum erro, clique em &quot;Voltar e Corrigir&quot;.
+            </AlertDescription>
+          </Alert>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-[#623AA2] flex items-center gap-2">
+                <User className="h-5 w-5" />
+                1. Informações Pessoais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div><span className="font-medium text-gray-500">Nome Completo:</span><br />{formData.firstName} {formData.lastName}</div>
+                {formData.usedOtherName === 'SIM' && <div><span className="font-medium text-gray-500">Nome Anterior:</span><br />{formData.oldFirstName} {formData.oldLastName}</div>}
+                <div><span className="font-medium text-gray-500">Data de Nascimento:</span><br />{fmt(formData.birthDate)}</div>
+                <div><span className="font-medium text-gray-500">Cidade/Estado de Nascimento:</span><br />{formData.birthCity || '-'}</div>
+                <div><span className="font-medium text-gray-500">País:</span><br />{formData.birthCountry || '-'}</div>
+                <div><span className="font-medium text-gray-500">CPF:</span><br />{formData.cpf || '-'}</div>
+                <div><span className="font-medium text-gray-500">RG:</span><br />{formData.rg || '-'}</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-[#623AA2] flex items-center gap-2">
+                <Phone className="h-5 w-5" />
+                2. Contato
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="md:col-span-2"><span className="font-medium text-gray-500">Endereço:</span><br />{formData.address || '-'}</div>
+                <div><span className="font-medium text-gray-500">Bairro:</span><br />{formData.neighborhood || '-'}</div>
+                <div><span className="font-medium text-gray-500">Cidade:</span><br />{formData.city || '-'}</div>
+                <div><span className="font-medium text-gray-500">Estado:</span><br />{formData.contactState || '-'}</div>
+                <div><span className="font-medium text-gray-500">CEP:</span><br />{formData.zipCode || '-'}</div>
+                <div><span className="font-medium text-gray-500">Telefone:</span><br />{formData.phone1 || '-'}</div>
+                <div><span className="font-medium text-gray-500">E-mail:</span><br />{formData.email || '-'}</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-[#623AA2] flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                3. Redes Sociais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm">
+                <div><span className="font-medium text-gray-500">Possui redes sociais:</span><br />{formData.hasSocialMedia === 'SIM' ? 'Sim' : formData.hasSocialMedia === 'NAO' ? 'Não' : '-'}</div>
+                {formData.hasSocialMedia === 'SIM' && formData.socialList.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {formData.socialList.map((s, i) => (
+                      <div key={i}><span className="font-medium text-gray-500">{s.platform}:</span> {s.username}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-[#623AA2] flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                4. Passaporte
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div><span className="font-medium text-gray-500">Série/Número:</span><br />{formData.passportSeries || '-'}/{formData.passportNumber || '-'}</div>
+                <div><span className="font-medium text-gray-500">Data de Emissão:</span><br />{fmt(formData.passportIssueDate)}</div>
+                <div><span className="font-medium text-gray-500">Data de Expiração:</span><br />{fmt(formData.passportExpiryDate)}</div>
+                <div><span className="font-medium text-gray-500">Cidade/Estado de Emissão:</span><br />{formData.passportIssueCity || '-'} / {formData.passportIssueState || '-'}</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-[#623AA2] flex items-center gap-2">
+                <Plane className="h-5 w-5" />
+                5. Viagem
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div><span className="font-medium text-gray-500">Motivo:</span><br />{formData.travelReason || '-'}</div>
+                {formData.knowsArrivalDate === 'SIM' && <div><span className="font-medium text-gray-500">Data de Chegada:</span><br />{fmt(formData.arrivalDate)}</div>}
+                {formData.stayDuration && <div><span className="font-medium text-gray-500">Permanência:</span><br />{formData.stayDuration}</div>}
+                {formData.travelSponsor && <div><span className="font-medium text-gray-500">Patrocinador:</span><br />{formData.travelSponsor}</div>}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-[#623AA2] flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                6. Ocupação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div><span className="font-medium text-gray-500">Ocupação:</span><br />{formData.jobTitle || '-'}</div>
+                <div><span className="font-medium text-gray-500">Empresa:</span><br />{formData.companyName || '-'}</div>
+                <div><span className="font-medium text-gray-500">Endereço da Empresa:</span><br />{formData.companyAddress || '-'}</div>
+                <div><span className="font-medium text-gray-500">Cidade/Estado:</span><br />{formData.companyCity || '-'} / {formData.companyState || '-'}</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="sticky bottom-0 bg-white py-4 border-t flex flex-col sm:flex-row gap-3 justify-end shadow-lg rounded-lg px-4 mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowReview(false)}
+              className="w-full sm:w-auto h-12"
+              disabled={submitting}
+            >
+              Voltar e Corrigir
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmSubmit}
+              className="bg-[#009639] hover:bg-[#007a2e] w-full sm:w-auto h-12 text-lg"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-5 w-5" />
+                  Confirmar e Enviar
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     );
