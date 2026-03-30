@@ -51,7 +51,7 @@ import {
   FileDown,
   CheckCircle
 } from 'lucide-react';
-import { formatDateToBrazilian, formatDate, maskCPF } from '@/lib/masks';
+import { formatDateToBrazilian, formatDate, formatDateForTXT, cleanPhone, maskCPF, getBrazilDateTimeString } from '@/lib/masks';
 import { toast } from 'sonner';
 
 interface Formulario {
@@ -527,28 +527,352 @@ export default function AdminPage() {
 
   const generateTXT = (form: Formulario) => {
     const dados = form.dados as Record<string, unknown>;
-    let txt = 'FORMULÁRIO DS160 - VISTO AMERICANO\n';
-    txt += '=====================================\n\n';
-    txt += `CPF: ${form.cpf}\n`;
-    txt += `Status: ${form.status}\n`;
-    txt += `Data de Criação: ${formatDate(form.createdAt)}\n\n`;
-    txt += '--- DADOS DO FORMULÁRIO ---\n\n';
 
-    Object.entries(dados).forEach(([key, value]) => {
-      if (value && (typeof value === 'string' || typeof value === 'number')) {
-        txt += `${key}: ${value}\n`;
+    // Helper para email minúsculo
+    const emailToLower = (value: unknown) => value && typeof value === 'string' ? value.toLowerCase() : '';
+
+    // Helper para telefone limpo
+    const phoneClean = (value: unknown) => value && typeof value === 'string' ? cleanPhone(value) : '';
+
+    // CPF sem pontuação
+    const cpfLimpo = form.cpf.replace(/\D/g, '');
+
+    // Helper para pegar string do dados
+    const get = (key: string) => dados[key] && typeof dados[key] === 'string' ? (dados[key] as string) : '';
+
+    // Helper para pegar array do dados
+    const getArray = (key: string): Array<Record<string, string>> => {
+      const val = dados[key];
+      return Array.isArray(val) ? val : [];
+    };
+
+    // Nome completo
+    const nomeCompleto = `${get('firstName')} ${get('lastName')}`.trim();
+
+    const sections: { [key: string]: string[] } = {
+      '0. LOCAL DE SOLICITAÇÃO': [],
+      '1. INFORMAÇÕES PESSOAIS': [],
+      '2. INFORMAÇÕES DE CONTATO': [],
+      '3. ENDEREÇO DE CORRESPONDÊNCIA': [],
+      '4. REDES SOCIAIS': [],
+      '5. PASSAPORTE': [],
+      '6. VIAGEM': [],
+      '7. VISTOS ANTERIORES': [],
+      '8. INFORMAÇÕES FAMILIARES': [],
+      '9. OCUPAÇÃO ATUAL': [],
+      '10. OCUPAÇÃO ANTERIOR': [],
+      '11. UNIVERSITÁRIO': [],
+      '12. VIAGENS INTERNACIONAIS': [],
+      '13. DADOS DO I20': []
+    };
+
+    const addField = (section: string, label: string, value: string) => {
+      if (value && value.trim() !== '') {
+        sections[section].push(`${label}: ${value}`);
+      }
+    };
+
+    // Section 0 - Local de Solicitação
+    addField('0. LOCAL DE SOLICITAÇÃO', 'Local de Solicitação', get('applicationLocation'));
+
+    // Section 1 - Informações Pessoais
+    addField('1. INFORMAÇÕES PESSOAIS', 'Sobrenome', get('lastName'));
+    addField('1. INFORMAÇÕES PESSOAIS', 'Nome', get('firstName'));
+    addField('1. INFORMAÇÕES PESSOAIS', 'Utilizou outro nome', get('usedOtherName'));
+    if (get('usedOtherName') === 'SIM') {
+      addField('1. INFORMAÇÕES PESSOAIS', 'Antigo Sobrenome', get('oldLastName'));
+      addField('1. INFORMAÇÕES PESSOAIS', 'Antigo Nome', get('oldFirstName'));
+    }
+    addField('1. INFORMAÇÕES PESSOAIS', 'Data de Nascimento', formatDateForTXT(get('birthDate')));
+    addField('1. INFORMAÇÕES PESSOAIS', 'Cidade/Estado de Nascimento', get('birthCity'));
+    addField('1. INFORMAÇÕES PESSOAIS', 'País de Nascimento', get('birthCountry'));
+    addField('1. INFORMAÇÕES PESSOAIS', 'CPF', cpfLimpo);
+    addField('1. INFORMAÇÕES PESSOAIS', 'RG', get('rg'));
+
+    // Section 2 - Informações de Contato
+    addField('2. INFORMAÇÕES DE CONTATO', 'Endereço', get('address'));
+    addField('2. INFORMAÇÕES DE CONTATO', 'Número', get('addressNumber'));
+    addField('2. INFORMAÇÕES DE CONTATO', 'Complemento', get('addressComplement'));
+    addField('2. INFORMAÇÕES DE CONTATO', 'Bairro', get('neighborhood'));
+    addField('2. INFORMAÇÕES DE CONTATO', 'Cidade', get('city'));
+    addField('2. INFORMAÇÕES DE CONTATO', 'Estado', get('contactState'));
+    addField('2. INFORMAÇÕES DE CONTATO', 'CEP', get('zipCode'));
+    addField('2. INFORMAÇÕES DE CONTATO', 'País', get('country'));
+    addField('2. INFORMAÇÕES DE CONTATO', 'Telefone Principal', phoneClean(dados.phone1));
+    addField('2. INFORMAÇÕES DE CONTATO', 'Telefone Opcional', phoneClean(dados.phone2));
+    addField('2. INFORMAÇÕES DE CONTATO', 'Telefone Profissional', phoneClean(dados.phoneProfessional));
+    addField('2. INFORMAÇÕES DE CONTATO', 'E-mail Principal', emailToLower(dados.email));
+    addField('2. INFORMAÇÕES DE CONTATO', 'Utilizou outros telefones', get('usedOtherPhones'));
+    if (get('usedOtherPhones') === 'SIM') {
+      addField('2. INFORMAÇÕES DE CONTATO', 'Outros Telefones', phoneClean(dados.otherPhones));
+    }
+    addField('2. INFORMAÇÕES DE CONTATO', 'Utilizou outros e-mails', get('usedOtherEmails'));
+    if (get('usedOtherEmails') === 'SIM') {
+      addField('2. INFORMAÇÕES DE CONTATO', 'Outros E-mails', emailToLower(dados.otherEmails));
+    }
+
+    // Section 3 - Endereço de Correspondência
+    addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Endereço igual à residência', get('sameAddress'));
+    if (get('sameAddress') === 'NAO') {
+      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Rua', get('corrStreet'));
+      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Número', get('corrNumber'));
+      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Complemento', get('corrComplement'));
+      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Bairro', get('corrNeighborhood'));
+      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Cidade', get('corrCity'));
+      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Estado', get('corrState'));
+      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'CEP', get('corrZipCode'));
+      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'País', get('corrCountry'));
+    }
+
+    // Section 4 - Redes Sociais
+    const socialList = getArray('socialList');
+    if (socialList.length > 0) {
+      socialList.forEach((s, i) => {
+        addField('4. REDES SOCIAIS', `${i + 1}. ${s.platform || ''}`, s.username || '');
+      });
+    } else {
+      addField('4. REDES SOCIAIS', 'Possui redes sociais', get('hasSocialMedia'));
+    }
+
+    // Section 5 - Passaporte
+    addField('5. PASSAPORTE', 'Série', get('passportSeries'));
+    addField('5. PASSAPORTE', 'Número', get('passportNumber'));
+    addField('5. PASSAPORTE', 'Cidade de Emissão', get('passportIssueCity'));
+    addField('5. PASSAPORTE', 'Estado de Emissão', get('passportIssueState'));
+    addField('5. PASSAPORTE', 'Data de Emissão', formatDateForTXT(get('passportIssueDate')));
+    addField('5. PASSAPORTE', 'Data de Expiração', formatDateForTXT(get('passportExpiryDate')));
+
+    // Section 6 - Viagem
+    addField('6. VIAGEM', 'Motivo da Viagem', get('travelReason'));
+    addField('6. VIAGEM', 'Possui planos específicos', get('hasTravelPlans'));
+    addField('6. VIAGEM', 'Sabe a data de chegada', get('knowsArrivalDate'));
+    if (get('knowsArrivalDate') === 'SIM') {
+      addField('6. VIAGEM', 'Data de Chegada Pretendida', formatDateForTXT(get('arrivalDate')));
+    }
+    addField('6. VIAGEM', 'Tempo de Permanência', get('stayDuration'));
+    addField('6. VIAGEM', 'Locais que deseja visitar', get('placesToVisit'));
+    addField('6. VIAGEM', 'Quem patrocina a viagem', get('travelSponsor'));
+    if (get('travelSponsor') === 'OUTROS') {
+      addField('6. VIAGEM', 'Nome do Patrocinador', get('sponsorName'));
+      addField('6. VIAGEM', 'Telefone do Patrocinador', phoneClean(dados.sponsorPhone));
+      addField('6. VIAGEM', 'E-mail do Patrocinador', emailToLower(dados.sponsorEmail));
+      addField('6. VIAGEM', 'Relação com o Patrocinador', get('sponsorRelation'));
+      addField('6. VIAGEM', 'Cidade do Patrocinador', get('sponsorCity'));
+      addField('6. VIAGEM', 'Estado do Patrocinador', get('sponsorState'));
+      addField('6. VIAGEM', 'CEP do Patrocinador', get('sponsorZipCode'));
+      addField('6. VIAGEM', 'País do Patrocinador', get('sponsorCountry'));
+    }
+    addField('6. VIAGEM', 'Sabe o endereço nos EUA', get('knowsUSAddress'));
+    if (get('knowsUSAddress') === 'SIM') {
+      addField('6. VIAGEM', 'Endereço nos EUA - Rua', get('usStreet'));
+      addField('6. VIAGEM', 'Endereço nos EUA - Número', get('usNumber'));
+      addField('6. VIAGEM', 'Endereço nos EUA - Complemento', get('usComplement'));
+      addField('6. VIAGEM', 'Endereço nos EUA - Cidade', get('usCity'));
+      addField('6. VIAGEM', 'Endereço nos EUA - Estado', get('usState'));
+      addField('6. VIAGEM', 'Endereço nos EUA - CEP', get('usZipCode'));
+    }
+    addField('6. VIAGEM', 'Viaja com companheiros', get('travelCompanions'));
+    if (get('travelCompanions') === 'SIM') {
+      addField('6. VIAGEM', 'É grupo ou organização', get('isGroup'));
+      if (get('isGroup') === 'SIM') {
+        addField('6. VIAGEM', 'Nome do Grupo', get('groupName'));
+      } else {
+        const companionsList = getArray('companionsList');
+        if (companionsList.length > 0) {
+          companionsList.forEach((c, i) => {
+            addField('6. VIAGEM', `Companheiro ${i + 1} - Sobrenome`, c.lastName || '');
+            addField('6. VIAGEM', `Companheiro ${i + 1} - Nome`, c.firstName || '');
+            addField('6. VIAGEM', `Companheiro ${i + 1} - Grau de Parentesco`, c.relationship || '');
+          });
+        }
+      }
+    }
+
+    // Section 7 - Vistos Anteriores
+    addField('7. VISTOS ANTERIORES', 'Já possuiu visto para os EUA', get('usTravelHistory'));
+    if (get('usTravelHistory') === 'SIM') {
+      addField('7. VISTOS ANTERIORES', 'Data de Emissão do Visto', formatDateForTXT(get('visaIssueDate')));
+      addField('7. VISTOS ANTERIORES', 'Data de Vencimento do Visto', formatDateForTXT(get('visaExpiryDate')));
+      addField('7. VISTOS ANTERIORES', 'Número do Visto', get('visaNumber'));
+      addField('7. VISTOS ANTERIORES', 'Data da Última Chegada nos EUA', formatDateForTXT(get('lastArrivalDate')));
+      addField('7. VISTOS ANTERIORES', 'Data da Última Saída dos EUA', formatDateForTXT(get('lastDepartureDate')));
+      addField('7. VISTOS ANTERIORES', 'Data da Penúltima Chegada nos EUA', formatDateForTXT(get('secondLastArrivalDate')));
+      addField('7. VISTOS ANTERIORES', 'Data da Penúltima Saída dos EUA', formatDateForTXT(get('secondLastDepartureDate')));
+      addField('7. VISTOS ANTERIORES', 'Visto já foi negado ou cancelado', get('visaDenied'));
+      if (get('visaDenied') === 'SIM') {
+        addField('7. VISTOS ANTERIORES', 'Motivo da negativa ou cancelamento', get('visaDeniedReason'));
+      }
+    }
+
+    // Section 8 - Informações Familiares
+    addField('8. INFORMAÇÕES FAMILIARES', 'Sobrenome do Pai', get('fatherLastName'));
+    addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Pai', get('fatherFirstName'));
+    addField('8. INFORMAÇÕES FAMILIARES', 'Data de Nascimento do Pai', formatDateForTXT(get('fatherBirthDate')));
+    addField('8. INFORMAÇÕES FAMILIARES', 'Pai reside nos EUA', get('fatherInUSA'));
+    if (get('fatherInUSA') === 'SIM') {
+      addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Pai nos EUA', get('fatherUSAAddress'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'CEP do Pai nos EUA', get('fatherUSAZipCode'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Telefone do Pai nos EUA', phoneClean(dados.fatherUSAPhone));
+      addField('8. INFORMAÇÕES FAMILIARES', 'E-mail do Pai', emailToLower(dados.fatherUSAEmail));
+    }
+    addField('8. INFORMAÇÕES FAMILIARES', 'Sobrenome da Mãe', get('motherLastName'));
+    addField('8. INFORMAÇÕES FAMILIARES', 'Nome da Mãe', get('motherFirstName'));
+    addField('8. INFORMAÇÕES FAMILIARES', 'Data de Nascimento da Mãe', formatDateForTXT(get('motherBirthDate')));
+    addField('8. INFORMAÇÕES FAMILIARES', 'Mãe reside nos EUA', get('motherInUSA'));
+    if (get('motherInUSA') === 'SIM') {
+      addField('8. INFORMAÇÕES FAMILIARES', 'Endereço da Mãe nos EUA', get('motherUSAAddress'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'CEP da Mãe nos EUA', get('motherUSAZipCode'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Telefone da Mãe nos EUA', phoneClean(dados.motherUSAPhone));
+      addField('8. INFORMAÇÕES FAMILIARES', 'E-mail da Mãe', emailToLower(dados.motherUSAEmail));
+    }
+    addField('8. INFORMAÇÕES FAMILIARES', 'Possui parentes nos EUA', get('relativesInUSA'));
+    if (get('relativesInUSA') === 'SIM') {
+      addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Parente nos EUA', get('relativeName'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Relação com o Parente', get('relativeRelation'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Empresa do Parente', get('relativeCompany'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Parente', get('relativeAddress'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Cidade do Parente', get('relativeCity'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Estado do Parente', get('relativeState'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'CEP do Parente', get('relativeZipCode'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Telefone do Parente', phoneClean(dados.relativePhone));
+      addField('8. INFORMAÇÕES FAMILIARES', 'E-mail do Parente', emailToLower(dados.relativeEmail));
+    }
+    addField('8. INFORMAÇÕES FAMILIARES', 'Atualmente é casado(a)', get('isCurrentlyMarried'));
+    if (get('isCurrentlyMarried') === 'SIM') {
+      addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Cônjuge', get('spouseName'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Data de Nascimento do Cônjuge', formatDateForTXT(get('spouseBirthDate')));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Cidade/Estado de Nascimento do Cônjuge', get('spouseBirthCityState'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Cônjuge reside no mesmo endereço', get('spouseSameAddress'));
+      if (get('spouseSameAddress') === 'NAO') {
+        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Rua', get('spouseStreet'));
+        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Número', get('spouseNumber'));
+        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Complemento', get('spouseComplement'));
+        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Bairro', get('spouseNeighborhood'));
+        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Cidade', get('spouseCity'));
+        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Estado', get('spouseState'));
+        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - CEP', get('spouseZipCode'));
+      }
+    }
+    addField('8. INFORMAÇÕES FAMILIARES', 'Já foi casado(a) anteriormente', get('wasMarried'));
+    if (get('wasMarried') === 'SIM') {
+      addField('8. INFORMAÇÕES FAMILIARES', 'Nome do Ex-cônjuge', get('exSpouseName'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Data de Nascimento do Ex-cônjuge', formatDateForTXT(get('exSpouseBirthDate')));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Cidade de Nascimento do Ex-cônjuge', get('exSpouseBirthCity'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Estado de Nascimento do Ex-cônjuge', get('exSpouseBirthState'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Data do Casamento', formatDateForTXT(get('marriageDate')));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Data do Divórcio', formatDateForTXT(get('divorceDate')));
+      addField('8. INFORMAÇÕES FAMILIARES', 'País do Divórcio', get('divorceCountry'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'Motivo do Término do Casamento', get('divorceReason'));
+    }
+
+    // Section 9 - Ocupação Atual
+    addField('9. OCUPAÇÃO ATUAL', 'Ocupação Atual', get('jobTitle'));
+    addField('9. OCUPAÇÃO ATUAL', 'Nome da Empresa/Instituição', get('companyName'));
+    addField('9. OCUPAÇÃO ATUAL', 'Endereço da Empresa', get('companyAddress'));
+    addField('9. OCUPAÇÃO ATUAL', 'Cidade da Empresa', get('companyCity'));
+    addField('9. OCUPAÇÃO ATUAL', 'Estado da Empresa', get('companyState'));
+    addField('9. OCUPAÇÃO ATUAL', 'CEP da Empresa', get('companyZip'));
+    addField('9. OCUPAÇÃO ATUAL', 'Telefone da Empresa', phoneClean(dados.companyPhone));
+    addField('9. OCUPAÇÃO ATUAL', 'Data de Início na Empresa', formatDateForTXT(get('companyStartDate')));
+    addField('9. OCUPAÇÃO ATUAL', 'Descrição das Funções/Curso e Período', get('jobDescription'));
+    addField('9. OCUPAÇÃO ATUAL', 'Remuneração Mensal', get('companySalary'));
+    addField('9. OCUPAÇÃO ATUAL', 'Valor de Renda Adicional', get('extraIncomeAmount'));
+    addField('9. OCUPAÇÃO ATUAL', 'Descrição da Renda Adicional', get('extraIncomeDescription'));
+
+    // Section 10 - Ocupação Anterior
+    addField('10. OCUPAÇÃO ANTERIOR', 'Teve ocupação anterior', get('hasPrevJob'));
+    const prevJobsList = getArray('prevJobsList');
+    if (get('hasPrevJob') === 'SIM' && prevJobsList.length > 0) {
+      prevJobsList.forEach((job, i) => {
+        const prefix = prevJobsList.length > 1 ? `Ocupação ${i + 1} - ` : '';
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Ocupação`, job.jobTitle || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Nome da Empresa`, job.companyName || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Endereço da Empresa`, job.companyAddress || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Bairro da Empresa`, job.companyNeighborhood || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Cidade da Empresa`, job.companyCity || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Estado da Empresa`, job.companyState || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}CEP da Empresa`, job.companyZip || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Telefone da Empresa`, cleanPhone(job.companyPhone || ''));
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}País da Empresa`, job.companyCountry || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data de Início`, formatDateForTXT(job.startDate || ''));
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data de Término`, formatDateForTXT(job.endDate || ''));
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Remuneração Mensal`, job.companySalary || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Nome do Supervisor`, job.supervisorName || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Descrição das Funções`, job.jobDescription || '');
+      });
+    }
+
+    // Section 11 - Universitário
+    addField('11. UNIVERSITÁRIO', 'Frequentou escola ou universidade', get('hasUniversity'));
+    if (get('hasUniversity') === 'SIM') {
+      addField('11. UNIVERSITÁRIO', 'Nome da Instituição', get('universityName'));
+      addField('11. UNIVERSITÁRIO', 'Endereço da Instituição', get('universityAddress'));
+      addField('11. UNIVERSITÁRIO', 'Cidade da Instituição', get('universityCity'));
+      addField('11. UNIVERSITÁRIO', 'Estado da Instituição', get('universityState'));
+      addField('11. UNIVERSITÁRIO', 'CEP da Instituição', get('universityZip'));
+      addField('11. UNIVERSITÁRIO', 'Curso', get('universityCourse'));
+      addField('11. UNIVERSITÁRIO', 'Data de Início', formatDateForTXT(get('universityStartDate')));
+      addField('11. UNIVERSITÁRIO', 'Data de Conclusão', formatDateForTXT(get('universityEndDate')));
+      const schoolsList = getArray('schoolsList');
+      if (schoolsList.length > 0) {
+        schoolsList.forEach((school, i) => {
+          const prefix = `Instituição ${i + 2} - `;
+          addField('11. UNIVERSITÁRIO', `${prefix}Nome da Instituição`, school.name || '');
+          addField('11. UNIVERSITÁRIO', `${prefix}Endereço da Instituição`, school.address || '');
+          addField('11. UNIVERSITÁRIO', `${prefix}Cidade da Instituição`, school.city || '');
+          addField('11. UNIVERSITÁRIO', `${prefix}Estado da Instituição`, school.state || '');
+          addField('11. UNIVERSITÁRIO', `${prefix}CEP da Instituição`, school.zip || '');
+          addField('11. UNIVERSITÁRIO', `${prefix}Curso`, school.course || '');
+          addField('11. UNIVERSITÁRIO', `${prefix}Data de Início`, formatDateForTXT(school.startDate || ''));
+          addField('11. UNIVERSITÁRIO', `${prefix}Data de Conclusão`, formatDateForTXT(school.endDate || ''));
+        });
+      }
+    }
+
+    // Section 12 - Viagens Internacionais
+    addField('12. VIAGENS INTERNACIONAIS', 'Viajou nos últimos 5 anos', get('traveledLast5Years'));
+    addField('12. VIAGENS INTERNACIONAIS', 'Países Visitados', get('traveledCountry1'));
+    addField('12. VIAGENS INTERNACIONAIS', 'Idiomas que fala', get('spokenLanguages'));
+
+    // Section 13 - Dados do I-20
+    addField('13. DADOS DO I20', 'Possui formulário I-20', get('hasI20'));
+    if (get('hasI20') === 'SIM') {
+      addField('13. DADOS DO I20', 'Número do I-20', get('i20Number'));
+      addField('13. DADOS DO I20', 'Nome da Escola', get('i20SchoolName'));
+      addField('13. DADOS DO I20', 'Curso', get('i20Course'));
+      addField('13. DADOS DO I20', 'Período do Curso', get('i20CoursePeriod'));
+      addField('13. DADOS DO I20', 'Telefone da Escola', phoneClean(dados.i20SchoolPhone));
+      addField('13. DADOS DO I20', 'E-mail da Escola', emailToLower(dados.i20SchoolEmail));
+    }
+
+    // Montar TXT final
+    let txt = `FORMULÁRIO DS-160 - VISTO AMERICANO\n`;
+    txt += `${nomeCompleto}\n`;
+    txt += `Data de Geração: ${getBrazilDateTimeString()}\n`;
+
+    Object.entries(sections).forEach(([section, items]) => {
+      if (items.length > 0) {
+        txt += `====== ${section} ======\n`;
+        items.forEach(item => {
+          txt += `${item}\n`;
+        });
+        txt += '\n';
       }
     });
 
+    // Download - salva com nome do usuário
     const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `DS160_${form.cpf}.txt`;
+    const nomeArquivo = `${nomeCompleto}`.replace(/\s+/g, '_').toLowerCase();
+    a.download = `DS160_${nomeArquivo}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    toast.success('Arquivo TXT gerado com sucesso!');
   };
 
   const generatePDF = (form: Formulario) => {
