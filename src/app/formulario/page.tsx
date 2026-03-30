@@ -637,6 +637,18 @@ export default function FormularioPage() {
 
     // Seção 4 - Redes Sociais
     if (!formData.hasSocialMedia) errors.push('Possui redes sociais?');
+    
+    // Se SIM para redes sociais, deve ter pelo menos uma rede informada com plataforma e usuário
+    if (formData.hasSocialMedia === 'SIM') {
+      if (formData.socialList.length === 0) {
+        errors.push('Adicione pelo menos uma rede social');
+      } else {
+        formData.socialList.forEach((social, index) => {
+          if (!social.platform) errors.push(`Rede social ${index + 1}: Plataforma`);
+          if (!social.username) errors.push(`Rede social ${index + 1}: Nome de usuário`);
+        });
+      }
+    }
 
     // Seção 5 - Passaporte
     if (!formData.passportSeries) errors.push('Série do Passaporte');
@@ -730,21 +742,25 @@ export default function FormularioPage() {
     // Seção 10 - Ocupação Anterior
     if (!formData.hasPrevJob) errors.push('Teve ocupação anterior?');
     
-    // Se SIM para ocupação anterior, validar cada ocupação na lista
-    if (formData.hasPrevJob === 'SIM' && formData.prevJobsList.length > 0) {
-      formData.prevJobsList.forEach((job, index) => {
-        if (!job.jobTitle) errors.push(`Ocupação anterior ${index + 1}: Ocupação`);
-        if (!job.companyName) errors.push(`Ocupação anterior ${index + 1}: Nome da Empresa`);
-        if (!job.companyAddress) errors.push(`Ocupação anterior ${index + 1}: Endereço`);
-        if (!job.companyCity) errors.push(`Ocupação anterior ${index + 1}: Cidade`);
-        if (!job.companyState) errors.push(`Ocupação anterior ${index + 1}: Estado`);
-        if (!job.companyZip) errors.push(`Ocupação anterior ${index + 1}: CEP`);
-        if (!job.startDate) errors.push(`Ocupação anterior ${index + 1}: Data de início`);
-        if (!job.endDate) errors.push(`Ocupação anterior ${index + 1}: Data de término`);
-        if (!job.companySalary) errors.push(`Ocupação anterior ${index + 1}: Remuneração`);
-        if (!job.jobDescription) errors.push(`Ocupação anterior ${index + 1}: Descrição das funções`);
-        if (!job.supervisorName) errors.push(`Ocupação anterior ${index + 1}: Nome do supervisor`);
-      });
+    // Se SIM para ocupação anterior, deve ter pelo menos uma ocupação informada
+    if (formData.hasPrevJob === 'SIM') {
+      if (formData.prevJobsList.length === 0) {
+        errors.push('Adicione pelo menos uma ocupação anterior');
+      } else {
+        formData.prevJobsList.forEach((job, index) => {
+          if (!job.jobTitle) errors.push(`Ocupação anterior ${index + 1}: Ocupação`);
+          if (!job.companyName) errors.push(`Ocupação anterior ${index + 1}: Nome da Empresa`);
+          if (!job.companyAddress) errors.push(`Ocupação anterior ${index + 1}: Endereço`);
+          if (!job.companyCity) errors.push(`Ocupação anterior ${index + 1}: Cidade`);
+          if (!job.companyState) errors.push(`Ocupação anterior ${index + 1}: Estado`);
+          if (!job.companyZip) errors.push(`Ocupação anterior ${index + 1}: CEP`);
+          if (!job.startDate) errors.push(`Ocupação anterior ${index + 1}: Data de início`);
+          if (!job.endDate) errors.push(`Ocupação anterior ${index + 1}: Data de término`);
+          if (!job.companySalary) errors.push(`Ocupação anterior ${index + 1}: Remuneração`);
+          if (!job.jobDescription) errors.push(`Ocupação anterior ${index + 1}: Descrição das funções`);
+          if (!job.supervisorName) errors.push(`Ocupação anterior ${index + 1}: Nome do supervisor`);
+        });
+      }
     }
 
     // Seção 11 - Universitário
