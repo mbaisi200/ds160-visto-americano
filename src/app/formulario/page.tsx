@@ -104,6 +104,8 @@ interface FormData {
   rg: string;
   // Section 2
   address: string;
+  addressNumber: string;
+  addressComplement: string;
   neighborhood: string;
   city: string;
   contactState: string;
@@ -280,6 +282,8 @@ const initialFormData: FormData = {
   cpf: '',
   rg: '',
   address: '',
+  addressNumber: '',
+  addressComplement: '',
   neighborhood: '',
   city: '',
   contactState: '',
@@ -618,6 +622,7 @@ export default function FormularioPage() {
 
     // Seção 2 - Contato
     if (!formData.address) errors.push('Endereço');
+    if (!formData.addressNumber) errors.push('Número do endereço');
     if (!formData.neighborhood) errors.push('Bairro');
     if (!formData.city) errors.push('Cidade');
     if (!formData.contactState) errors.push('Estado');
@@ -669,12 +674,6 @@ export default function FormularioPage() {
 
     // Seção 7 - Vistos Anteriores
     if (!formData.usTravelHistory) errors.push('Já teve visto para os EUA?');
-    
-    // Se SIM para visto anterior, apenas campos da Última vez nos EUA são obrigatórios
-    if (formData.usTravelHistory === 'SIM') {
-      if (!formData.lastArrivalDate) errors.push('Data de chegada (última vez nos EUA)');
-      if (!formData.lastDepartureDate) errors.push('Data de saída (última vez nos EUA)');
-    }
 
     // Seção 8 - Informações Familiares
     // Pai - campos obrigatórios
@@ -738,7 +737,8 @@ export default function FormularioPage() {
     if (!formData.companyState) errors.push('Estado da Empresa');
     if (!formData.companyZip) errors.push('CEP da Empresa');
     if (!formData.companyStartDate) errors.push('Data de início');
-    if (!formData.companySalary) errors.push('Remuneração');
+    // Remuneração não é obrigatória se for estudante
+    if (formData.jobTitle && formData.jobTitle.toUpperCase().includes('ESTUDANTE') === false && !formData.companySalary) errors.push('Remuneração');
     if (!formData.jobDescription) errors.push('Descrição das funções');
 
     // Seção 10 - Ocupação Anterior
@@ -1001,6 +1001,9 @@ export default function FormularioPage() {
 
     // Section 2
     addField('2. INFORMAÇÕES DE CONTATO', 'Endereço', formData.address);
+    addField('2. INFORMAÇÕES DE CONTATO', 'Número', formData.addressNumber);
+    addField('2. INFORMAÇÕES DE CONTATO', 'Complemento', formData.addressComplement);
+    addField('2. INFORMAÇÕES DE CONTATO', 'Bairro', formData.neighborhood);
     addField('2. INFORMAÇÕES DE CONTATO', 'Cidade', formData.city);
     addField('2. INFORMAÇÕES DE CONTATO', 'Estado', formData.contactState);
     addField('2. INFORMAÇÕES DE CONTATO', 'CEP', formData.zipCode);
@@ -1174,7 +1177,7 @@ export default function FormularioPage() {
     addField('9. OCUPAÇÃO ATUAL', 'Estado', formData.companyState);
     addField('9. OCUPAÇÃO ATUAL', 'CEP', formData.companyZip);
     addField('9. OCUPAÇÃO ATUAL', 'Data Início', formatDateForTXT(formData.companyStartDate));
-    addField('9. OCUPAÇÃO ATUAL', 'Descrição das funções', formData.jobDescription);
+    addField('9. OCUPAÇÃO ATUAL', 'Descrição das funções / Curso', formData.jobDescription);
     addField('9. OCUPAÇÃO ATUAL', 'Remuneração', formData.companySalary);
     addField('9. OCUPAÇÃO ATUAL', 'Ganho extra', formData.extraIncomeAmount);
     addField('9. OCUPAÇÃO ATUAL', 'Descrição ganho extra', formData.extraIncomeDescription);
@@ -1735,6 +1738,25 @@ export default function FormularioPage() {
                   onChange={(e) => handleInputChange('address', e.target.value)}
                  
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Número *</Label>
+                  <Input
+                    value={formData.addressNumber}
+                    onChange={(e) => handleInputChange('addressNumber', e.target.value)}
+                   
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <Label>Complemento</Label>
+                  <Input
+                    value={formData.addressComplement}
+                    onChange={(e) => handleInputChange('addressComplement', e.target.value)}
+                   
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3158,7 +3180,7 @@ export default function FormularioPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Remuneração (R$) *</Label>
+                  <Label>Remuneração (R$) {formData.jobTitle && formData.jobTitle.toUpperCase().includes('ESTUDANTE') ? '' : '*'}</Label>
                   <Input
                     value={formData.companySalary}
                     onChange={(e) => handleInputChange('companySalary', e.target.value)}
@@ -3167,12 +3189,12 @@ export default function FormularioPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Descrição das funções *</Label>
+                <Label>Descrição das funções / Curso e período de estudo *</Label>
                 <Textarea
                   value={formData.jobDescription}
                   onChange={(e) => handleInputChange('jobDescription', e.target.value)}
-                 
-                />
+                  placeholder={formData.jobTitle && formData.jobTitle.toUpperCase().includes('ESTUDANTE') ? 'Descreva o curso que está cursando, turno e período (ex: Ciência da Computação, 3° período, turno integral)' : 'Descreva suas principais funções e responsabilidades'}
+                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3698,14 +3720,6 @@ export default function FormularioPage() {
 
           {/* Submit */}
           <div className="sticky bottom-0 bg-gray-50 py-4 -mx-4 px-4 border-t sm:border-t-0 sm:bg-transparent sm:static sm:flex sm:justify-end gap-3 sm:gap-4 sm:pb-8">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={generateTXT}
-              className="w-full sm:w-auto h-11 sm:h-10"
-            >
-              <Download className="h-4 w-4 sm:mr-2" /> <span className="sm:inline">Gerar TXT</span>
-            </Button>
             <Button
               type="submit"
               className="bg-[#009639] hover:bg-[#007a2e] w-full sm:w-auto h-11 sm:h-10"
