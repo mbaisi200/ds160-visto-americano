@@ -438,6 +438,7 @@ export default function FormularioPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [loadingForm, setLoadingForm] = useState(true);
   const [existingFormId, setExistingFormId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -775,11 +776,16 @@ export default function FormularioPage() {
     // Validar campos obrigatórios
     const errors = validateRequiredFields();
     if (errors.length > 0) {
-      toast.error(`Preencha os campos obrigatórios: ${errors.slice(0, 5).join(', ')}${errors.length > 5 ? '...' : ''}`);
-      setSubmitting(false);
+      setValidationErrors(errors);
+      toast.error(`Preencha os campos obrigatórios: ${errors.slice(0, 5).join(', ')}${errors.length > 5 ? ` e mais ${errors.length - 5} campos` : ''}`, {
+        duration: 8000,
+      });
+      // Rolar para o topo do formulário para mostrar os erros
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
+    setValidationErrors([]);
     setSubmitting(true);
 
     try {
@@ -1369,6 +1375,21 @@ export default function FormularioPage() {
         </Alert>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Validation Errors */}
+          {validationErrors.length > 0 && (
+            <Alert className="border-red-300 bg-red-50">
+              <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+              <AlertDescription className="text-red-800">
+                <strong>Formulário incompleto ({validationErrors.length} {validationErrors.length === 1 ? 'campo pendente' : 'campos pendentes'}):</strong>
+                <ul className="mt-2 list-disc list-inside space-y-1">
+                  {validationErrors.map((error, index) => (
+                    <li key={index} className="text-sm">{error}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Section 0 - Application Location */}
           <Card>
             <CardHeader>
