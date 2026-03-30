@@ -147,22 +147,28 @@ export function formatDateToBrazilian(dateString: string): string {
   return `${day}/${month}/${year}`;
 }
 
-// Format date for TXT output - returns date in DDMMYYYY format (sequential, no separators)
+// Format date for TXT output - returns date in Brazilian format (DD/MM/YYYY)
 export function formatDateForTXT(dateString: string): string {
   if (!dateString) return '';
   
-  // Se estiver no formato ISO (YYYY-MM-DD), converte para DDMMYYYY
+  // Se estiver no formato ISO (YYYY-MM-DD), converte para DD/MM/YYYY
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
     const [year, month, day] = dateString.split('-');
-    return `${day}${month}${year}`;
+    return `${day}/${month}/${year}`;
   }
   
-  // Se já estiver no formato DD/MM/YYYY, remove as barras
+  // Se já estiver no formato DD/MM/YYYY, retorna como está
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
-    return dateString.replace(/\//g, '');
+    return dateString;
   }
   
-  return dateString.replace(/\D/g, ''); // Remove tudo que não é dígito
+  return dateString;
+}
+
+// Clean phone number - remove all non-digit characters
+export function cleanPhone(value: string): string {
+  if (!value) return '';
+  return value.replace(/\D/g, '');
 }
 
 // Format date for display
