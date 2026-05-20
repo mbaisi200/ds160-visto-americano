@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -101,6 +101,8 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState('todos');
   const [periodFilter, setPeriodFilter] = useState('todos');
   const [isAuthorizing, setIsAuthorizing] = useState(false);
+  const [cpfSortField, setCpfSortField] = useState('createdAt');
+  const [cpfSortDir, setCpfSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     const initAdmin = async () => {
@@ -1018,6 +1020,25 @@ export default function AdminPage() {
   };
 
   // Função para verificar se está no período selecionado
+  const toggleCpfSort = (field: string) => {
+    if (cpfSortField === field) {
+      setCpfSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setCpfSortField(field);
+      setCpfSortDir('desc');
+    }
+  };
+
+  const SortHeader = ({ field, children }: { field: string; children: ReactNode }) => (
+    <button
+      onClick={() => toggleCpfSort(field)}
+      className="flex items-center gap-1 hover:text-[#623AA2] transition-colors"
+    >
+      {children}
+      <span className="text-xs">{cpfSortField === field ? (cpfSortDir === 'asc' ? '▲' : '▼') : '⇅'}</span>
+    </button>
+  );
+
   const isInPeriod = (form: Formulario): boolean => {
     if (periodFilter === 'todos') return true;
     
@@ -1064,7 +1085,13 @@ export default function AdminPage() {
     return index === latestIndex;
   });
 
-  const filteredCPFs = authorizedCPFs.filter(c => 
+  const sortedCPFs = [...authorizedCPFs].sort((a, b) => {
+    const dateA = a.createdAt?.seconds || 0;
+    const dateB = b.createdAt?.seconds || 0;
+    return cpfSortDir === 'desc' ? dateB - dateA : dateA - dateB;
+  });
+
+  const filteredCPFs = sortedCPFs.filter(c => 
     c.cpf.includes(searchTerm) || c.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -1405,13 +1432,14 @@ export default function AdminPage() {
                 <p className="text-center text-gray-500 py-8">Nenhum CPF autorizado</p>
               ) : (
                 <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <table className="w-full min-w-[700px]">
+                  <table className="w-full min-w-[800px]">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3 px-4 sm:px-2">CPF</th>
+                        <th className="text-left py-3 px-4 sm:px-2"><SortHeader field="cpf">CPF</SortHeader></th>
                         <th className="text-left py-3 px-4 sm:px-2">Conta</th>
                         <th className="text-left py-3 px-4 sm:px-2">Senha Padrão</th>
-                        <th className="text-left py-3 px-4 sm:px-2">Status</th>
+                        <th className="text-left py-3 px-4 sm:px-2"><SortHeader field="data">Data de Envio</SortHeader></th>
+                        <th className="text-left py-3 px-4 sm:px-2"><SortHeader field="status">Status</SortHeader></th>
                         <th className="text-right py-3 px-4 sm:px-2">Ações</th>
                       </tr>
                     </thead>
@@ -1440,6 +1468,9 @@ export default function AdminPage() {
                             ) : (
                               <span className="text-gray-400 text-xs">Criar conta primeiro</span>
                             )}
+                          </td>
+                          <td className="py-3 px-4 sm:px-2 text-sm text-gray-500">
+                            {formatDate(cpf.createdAt)}
                           </td>
                           <td className="py-3 px-4 sm:px-2">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -1534,40 +1565,65 @@ export default function AdminPage() {
             // Group fields into sections
             const sections = {
               pessoal: ['lastName', 'firstName', 'usedOtherName', 'oldLastName', 'oldFirstName', 'birthDate', 'birthCity', 'birthCountry', 'cpf', 'rg'],
-              contato: ['address', 'city', 'contactState', 'zipCode', 'country', 'phone1', 'phone2', 'phoneProfessional', 'email', 'usedOtherPhones', 'otherPhones', 'usedOtherEmails', 'otherEmails'],
+              contato: ['address', 'addressNumber', 'addressComplement', 'neighborhood', 'city', 'contactState', 'zipCode', 'country', 'phone1', 'phone2', 'phoneProfessional', 'email', 'usedOtherPhones', 'otherPhones', 'usedOtherEmails', 'otherEmails'],
               correspondencia: ['sameAddress', 'corrStreet', 'corrNumber', 'corrComplement', 'corrNeighborhood', 'corrCity', 'corrState', 'corrZipCode', 'corrCountry'],
               sociais: ['hasSocialMedia', 'socialList'],
-              passaporte: ['passportSeries', 'passportNumber', 'passportIssueDate', 'passportExpiryDate'],
-              viagem: ['travelReason', 'hasTravelPlans', 'arrivalDate', 'stayDuration', 'placesToVisit', 'travelSponsor', 'sponsorName', 'sponsorPhone', 'sponsorRelation', 'usStreet', 'usCity', 'usState'],
-              vistoAnterior: ['usTravelHistory', 'visaIssueDate', 'visaExpiryDate', 'visaNumber', 'lastArrivalDate', 'lastDepartureDate', 'visaDenied', 'visaDeniedReason'],
-              familia: ['fatherName', 'fatherBirthDate', 'fatherInUSA', 'motherName', 'motherBirthDate', 'motherInUSA', 'relativesInUSA', 'relativeName', 'relativeRelation', 'spouseName', 'spouseBirthDate'],
-              trabalho: ['jobTitle', 'companyName', 'companyAddress', 'companyCity', 'companyState', 'companyStartDate', 'jobDescription', 'companySalary'],
-              outros: ['hasPrevJob', 'hasUniversity', 'traveledLast5Years', 'traveledCountry1', 'spokenLanguages', 'hasI20']
+              passaporte: ['passportSeries', 'passportNumber', 'passportIssueDate', 'passportIssueCity', 'passportIssueState', 'passportExpiryDate'],
+              viagem: ['travelReason', 'hasTravelPlans', 'knowsArrivalDate', 'arrivalDate', 'stayDuration', 'placesToVisit', 'travelCity', 'travelState', 'travelSponsor', 'sponsorName', 'sponsorPhone', 'sponsorEmail', 'sponsorRelation', 'sponsorCity', 'sponsorState', 'sponsorZipCode', 'sponsorCountry', 'knowsUSAddress', 'usStreet', 'usNumber', 'usComplement', 'usCity', 'usState', 'usZipCode', 'usCountry', 'travelCompanions', 'isGroup', 'groupName', 'companionsList'],
+              vistoAnterior: ['usTravelHistory', 'visaIssueDate', 'visaExpiryDate', 'visaNumber', 'lastArrivalDate', 'lastDepartureDate', 'secondLastArrivalDate', 'secondLastDepartureDate', 'visaDenied', 'visaDeniedReason'],
+              familia: ['fatherLastName', 'fatherFirstName', 'fatherBirthDate', 'fatherInUSA', 'fatherUSAAddress', 'fatherUSAZipCode', 'fatherUSAPhone', 'fatherUSAEmail', 'motherLastName', 'motherFirstName', 'motherBirthDate', 'motherInUSA', 'motherUSAAddress', 'motherUSAZipCode', 'motherUSAPhone', 'motherUSAEmail', 'relativesInUSA', 'relativeName', 'relativeRelation', 'relativeCompany', 'relativeAddress', 'relativeCity', 'relativeState', 'relativeZipCode', 'relativePhone', 'relativeEmail', 'isCurrentlyMarried', 'spouseName', 'spouseBirthDate', 'spouseBirthCityState', 'spouseSameAddress', 'spouseStreet', 'spouseNumber', 'spouseComplement', 'spouseNeighborhood', 'spouseCity', 'spouseState', 'spouseZipCode', 'wasMarried', 'exSpouseName', 'exSpouseBirthDate', 'exSpouseBirthCity', 'exSpouseBirthState', 'marriageDate', 'divorceDate', 'divorceCountry', 'divorceReason'],
+              trabalho: ['jobTitle', 'companyName', 'companyAddress', 'companyCity', 'companyState', 'companyZip', 'companyPhone', 'companyStartDate', 'jobDescription', 'companySalary', 'extraIncomeAmount', 'extraIncomeDescription'],
+              ocupacaoAnterior: ['hasPrevJob', 'prevJobsList'],
+              universitario: ['hasUniversity', 'universityName', 'universityAddress', 'universityCity', 'universityState', 'universityZip', 'universityCourse', 'universityStartDate', 'universityEndDate', 'schoolsList'],
+              viagens: ['traveledLast5Years', 'traveledCountry1', 'spokenLanguages'],
+              i20: ['hasI20', 'i20Number', 'i20SchoolName', 'i20Course', 'i20CoursePeriod', 'i20SchoolPhone', 'i20SchoolEmail']
             };
             
             const fieldLabels: Record<string, string> = {
               lastName: 'Sobrenome', firstName: 'Nome', usedOtherName: 'Usou outro nome', oldLastName: 'Antigo sobrenome', oldFirstName: 'Antigo nome',
               birthDate: 'Data de nascimento', birthCity: 'Cidade de nascimento', birthCountry: 'País de nascimento', cpf: 'CPF', rg: 'RG',
-              address: 'Endereço', city: 'Cidade', contactState: 'Estado', zipCode: 'CEP', country: 'País',
+              address: 'Endereço', addressNumber: 'Número', addressComplement: 'Complemento', neighborhood: 'Bairro',
+              city: 'Cidade', contactState: 'Estado', zipCode: 'CEP', country: 'País',
               phone1: 'Telefone principal', phone2: 'Telefone opcional', phoneProfessional: 'Telefone profissional', email: 'E-mail',
               usedOtherPhones: 'Usou outros telefones', otherPhones: 'Outros telefones', usedOtherEmails: 'Usou outros e-mails', otherEmails: 'Outros e-mails',
               sameAddress: 'Mesmo endereço', corrStreet: 'Rua', corrNumber: 'Número', corrComplement: 'Complemento', corrNeighborhood: 'Bairro',
               corrCity: 'Cidade', corrState: 'Estado', corrZipCode: 'CEP', corrCountry: 'País',
               hasSocialMedia: 'Possui redes sociais', socialList: 'Redes sociais',
-              passportSeries: 'Série', passportNumber: 'Número', passportIssueDate: 'Data de emissão', passportExpiryDate: 'Data de expiração',
-              travelReason: 'Motivo da viagem', hasTravelPlans: 'Planos específicos', arrivalDate: 'Data de chegada', stayDuration: 'Tempo de permanência',
-              placesToVisit: 'Locais a visitar', travelSponsor: 'Patrocinador', sponsorName: 'Nome do patrocinador', sponsorPhone: 'Telefone do patrocinador',
-              sponsorRelation: 'Relação', usStreet: 'Rua nos EUA', usCity: 'Cidade nos EUA', usState: 'Estado nos EUA',
+              passportSeries: 'Série', passportNumber: 'Número', passportIssueDate: 'Data de emissão', passportIssueCity: 'Cidade de emissão', passportIssueState: 'Estado de emissão', passportExpiryDate: 'Data de expiração',
+              travelReason: 'Motivo da viagem', hasTravelPlans: 'Planos específicos', knowsArrivalDate: 'Sabe data de chegada', arrivalDate: 'Data de chegada', stayDuration: 'Tempo de permanência',
+              placesToVisit: 'Locais a visitar', travelCity: 'Cidade', travelState: 'Estado (EUA)', travelSponsor: 'Patrocinador',
+              sponsorName: 'Nome do patrocinador', sponsorPhone: 'Telefone do patrocinador', sponsorEmail: 'E-mail do patrocinador',
+              sponsorRelation: 'Relação', sponsorCity: 'Cidade do patrocinador', sponsorState: 'Estado do patrocinador', sponsorZipCode: 'CEP do patrocinador', sponsorCountry: 'País do patrocinador',
+              knowsUSAddress: 'Sabe endereço nos EUA', usStreet: 'Rua nos EUA', usNumber: 'Número nos EUA', usComplement: 'Complemento nos EUA',
+              usCity: 'Cidade nos EUA', usState: 'Estado nos EUA', usZipCode: 'Zip Code', usCountry: 'País',
+              travelCompanions: 'Viaja com companheiros', isGroup: 'É grupo/organização', groupName: 'Nome do grupo', companionsList: 'Acompanhantes',
               usTravelHistory: 'Já teve visto', visaIssueDate: 'Data de emissão do visto', visaExpiryDate: 'Data de expiração', visaNumber: 'Número do visto',
-              lastArrivalDate: 'Última chegada', lastDepartureDate: 'Última saída', visaDenied: 'Visto negado', visaDeniedReason: 'Motivo da negação',
-              fatherName: 'Nome do pai', fatherBirthDate: 'Data nasc. pai', fatherInUSA: 'Pai nos EUA',
-              motherName: 'Nome da mãe', motherBirthDate: 'Data nasc. mãe', motherInUSA: 'Mãe nos EUA',
-              relativesInUSA: 'Parentes nos EUA', relativeName: 'Nome do parente', relativeRelation: 'Relação',
-              spouseName: 'Nome do cônjuge', spouseBirthDate: 'Data nasc. cônjuge',
-              jobTitle: 'Ocupação', companyName: 'Empresa', companyAddress: 'Endereço', companyCity: 'Cidade', companyState: 'Estado',
-              companyStartDate: 'Data de início', jobDescription: 'Descrição', companySalary: 'Salário',
-              hasPrevJob: 'Teve emprego anterior', hasUniversity: 'Frequentou universidade', traveledLast5Years: 'Viajou últimos 5 anos',
-              traveledCountry1: 'Países visitados', spokenLanguages: 'Idiomas', hasI20: 'Possui I-20'
+              lastArrivalDate: 'Última chegada', lastDepartureDate: 'Última saída',
+              secondLastArrivalDate: 'Penúltima chegada', secondLastDepartureDate: 'Penúltima saída',
+              visaDenied: 'Visto negado', visaDeniedReason: 'Motivo da negação',
+              fatherLastName: 'Sobrenome do pai', fatherFirstName: 'Nome do pai', fatherBirthDate: 'Data nasc. pai', fatherInUSA: 'Pai nos EUA',
+              fatherUSAAddress: 'Endereço do pai nos EUA', fatherUSAZipCode: 'Zip Code do pai', fatherUSAPhone: 'Tel. do pai nos EUA', fatherUSAEmail: 'E-mail do pai',
+              motherLastName: 'Sobrenome da mãe', motherFirstName: 'Nome da mãe', motherBirthDate: 'Data nasc. mãe', motherInUSA: 'Mãe nos EUA',
+              motherUSAAddress: 'Endereço da mãe nos EUA', motherUSAZipCode: 'Zip Code da mãe', motherUSAPhone: 'Tel. da mãe nos EUA', motherUSAEmail: 'E-mail da mãe',
+              relativesInUSA: 'Parentes nos EUA', relativeName: 'Nome do parente', relativeRelation: 'Relação', relativeCompany: 'Empresa do parente',
+              relativeAddress: 'Endereço do parente', relativeCity: 'Cidade do parente', relativeState: 'Estado do parente', relativeZipCode: 'Zip Code do parente',
+              relativePhone: 'Tel. do parente', relativeEmail: 'E-mail do parente',
+              isCurrentlyMarried: 'É casado(a)', spouseName: 'Nome do cônjuge', spouseBirthDate: 'Data nasc. cônjuge', spouseBirthCityState: 'Cidade/Estado nasc. cônjuge',
+              spouseSameAddress: 'Mesmo endereço', spouseStreet: 'Rua do cônjuge', spouseNumber: 'Número', spouseComplement: 'Complemento', spouseNeighborhood: 'Bairro',
+              spouseCity: 'Cidade', spouseState: 'Estado', spouseZipCode: 'CEP',
+              wasMarried: 'Já foi casado(a)', exSpouseName: 'Nome do ex-cônjuge', exSpouseBirthDate: 'Data nasc. ex-cônjuge',
+              exSpouseBirthCity: 'Cidade nasc. ex-cônjuge', exSpouseBirthState: 'Estado nasc. ex-cônjuge',
+              marriageDate: 'Data do casamento', divorceDate: 'Data do divórcio', divorceCountry: 'País do divórcio', divorceReason: 'Motivo do divórcio',
+              jobTitle: 'Ocupação', companyName: 'Empresa', companyAddress: 'Endereço da empresa', companyCity: 'Cidade da empresa', companyState: 'Estado da empresa',
+              companyZip: 'CEP da empresa', companyPhone: 'Tel. da empresa', companyStartDate: 'Data de início', jobDescription: 'Descrição',
+              companySalary: 'Remuneração', extraIncomeAmount: 'Ganho extra', extraIncomeDescription: 'Descrição do ganho extra',
+              hasPrevJob: 'Teve ocupação anterior', prevJobsList: 'Ocupações anteriores',
+              hasUniversity: 'Frequentou universidade', universityName: 'Nome da instituição', universityAddress: 'Endereço', universityCity: 'Cidade',
+              universityState: 'Estado', universityZip: 'CEP', universityCourse: 'Curso', universityStartDate: 'Data de início', universityEndDate: 'Data de conclusão',
+              schoolsList: 'Outras instituições',
+              traveledLast5Years: 'Viajou últimos 5 anos', traveledCountry1: 'Países visitados', spokenLanguages: 'Idiomas',
+              hasI20: 'Possui I-20', i20Number: 'Número do I-20', i20SchoolName: 'Nome da escola', i20Course: 'Curso',
+              i20CoursePeriod: 'Período', i20SchoolPhone: 'Tel. da escola', i20SchoolEmail: 'E-mail da escola'
             };
             
             const sectionLabels: Record<string, string> = {
@@ -1580,7 +1636,10 @@ export default function AdminPage() {
               vistoAnterior: 'Vistos Anteriores',
               familia: 'Informações Familiares',
               trabalho: 'Informações Profissionais',
-              outros: 'Outras Informações'
+              ocupacaoAnterior: 'Ocupação Anterior',
+              universitario: 'Universitário',
+              viagens: 'Viagens Internacionais',
+              i20: 'Dados do I-20'
             };
             
             const formatValue = (key: string, value: unknown): string => {

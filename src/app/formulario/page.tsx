@@ -51,7 +51,7 @@ import {
   Plus,
   Trash2
 } from 'lucide-react';
-import { removeAccents, formatDateToBrazilian, formatDateForTXT, cleanPhone, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF, getBrazilDateTimeString } from '@/lib/masks';
+import { removeAccents, formatDateToBrazilian, formatDateForTXT, cleanPhone, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF, getBrazilDateTimeString, maskCEP } from '@/lib/masks';
 import { toast } from 'sonner';
 
 interface PrevJob {
@@ -586,6 +586,44 @@ export default function FormularioPage() {
     }));
   };
 
+  // Handler para campos de email - mantém minúsculas
+  const handleEmailChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value.toLowerCase().trim()
+    }));
+  };
+
+  // Formata valor monetário brasileiro (R$)
+  const maskCurrencyBR = (value: string): string => {
+    const digits = value.replace(/\D/g, '');
+    if (!digits) return '';
+    const padded = digits.padStart(3, '0');
+    const integer = padded.slice(0, -2);
+    const decimal = padded.slice(-2);
+    const formattedInt = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${formattedInt},${decimal}`;
+  };
+
+  const handleSalaryChange = (field: keyof FormData, value: string) => {
+    const masked = maskCurrencyBR(value);
+    setFormData(prev => ({
+      ...prev,
+      [field]: masked
+    }));
+  };
+
+  // Handler específico para salary em prevJobsList
+  const handlePrevJobSalaryChange = (index: number, value: string) => {
+    const masked = maskCurrencyBR(value);
+    setFormData(prev => ({
+      ...prev,
+      prevJobsList: prev.prevJobsList.map((item, i) =>
+        i === index ? { ...item, companySalary: masked } : item
+      )
+    }));
+  };
+
   // Handler específico para campos de data - não aplica transformações
   const handleDateChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
@@ -671,6 +709,8 @@ export default function FormularioPage() {
     if (!formData.knowsArrivalDate) errors.push('Sabe a data de chegada?');
     if (formData.knowsArrivalDate === 'SIM' && !formData.arrivalDate) errors.push('Data de chegada pretendida');
     if (!formData.knowsUSAddress) errors.push('Sabe o endereço nos EUA?');
+    if (!formData.travelCompanions) errors.push('Existem pessoas que irão viajar com você?');
+    if (formData.travelCompanions === 'SIM' && !formData.isGroup) errors.push('É grupo ou organização?');
 
     // Seção 7 - Vistos Anteriores
     if (!formData.usTravelHistory) errors.push('Já teve visto para os EUA?');
@@ -853,7 +893,7 @@ export default function FormularioPage() {
     setFormData(prev => ({
       ...prev,
       socialList: prev.socialList.map((item, i) =>
-        i === index ? { ...item, [field]: field === 'platform' ? value : removeAccents(value.toUpperCase()) } : item
+        i === index ? { ...item, [field]: field === 'platform' ? value : value.toLowerCase().trim() } : item
       )
     }));
   };
@@ -956,6 +996,37 @@ export default function FormularioPage() {
         i === index ? { ...item, [field]: removeAccents(value.toUpperCase()) } : item
       )
     }));
+  };
+
+  const lookupCEP = useCallback(async (cep: string) => {
+    const clean = cep.replace(/\D/g, '');
+    if (clean.length !== 8) return;
+
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      const data = await res.json();
+      if (data.erro) return;
+
+      const toUpper = (s: string) => removeAccents((s || '').toUpperCase());
+      setFormData(prev => ({
+        ...prev,
+        address: toUpper(data.logradouro),
+        neighborhood: toUpper(data.bairro),
+        city: toUpper(data.localidade),
+        contactState: data.uf,
+      }));
+    } catch {
+      // silently fail
+    }
+  }, []);
+
+  const handleCEPChange = (field: 'zipCode' | 'corrZipCode', value: string) => {
+    const masked = maskCEP(value);
+    setFormData(prev => ({ ...prev, [field]: masked }));
+    const clean = masked.replace(/\D/g, '');
+    if (clean.length === 8 && field === 'zipCode') {
+      lookupCEP(masked);
+    }
   };
 
   const generateTXT = () => {
@@ -1741,11 +1812,21 @@ export default function FormularioPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label>CEP *</Label>
+                <Input
+                  value={formData.zipCode}
+                  onChange={(e) => handleCEPChange('zipCode', e.target.value)}
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label>Endereço *</Label>
                 <Input
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                 
+                  
                 />
               </div>
 
@@ -1755,7 +1836,7 @@ export default function FormularioPage() {
                   <Input
                     value={formData.addressNumber}
                     onChange={(e) => handleInputChange('addressNumber', e.target.value)}
-                   
+                    
                   />
                 </div>
                 <div className="md:col-span-2 space-y-2">
@@ -1763,18 +1844,18 @@ export default function FormularioPage() {
                   <Input
                     value={formData.addressComplement}
                     onChange={(e) => handleInputChange('addressComplement', e.target.value)}
-                   
+                    
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Bairro *</Label>
                   <Input
                     value={formData.neighborhood}
                     onChange={(e) => handleInputChange('neighborhood', e.target.value)}
-                   
+                    
                   />
                 </div>
                 <div className="space-y-2">
@@ -1782,26 +1863,15 @@ export default function FormularioPage() {
                   <Input
                     value={formData.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
-                   
+                    
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Estado *</Label>
                   <Input
                     value={formData.contactState}
                     onChange={(e) => handleInputChange('contactState', e.target.value)}
-                   
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>CEP *</Label>
-                  <Input
-                    value={formData.zipCode}
-                    onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                   
+                    
                   />
                 </div>
               </div>
@@ -1837,7 +1907,7 @@ export default function FormularioPage() {
                   <Input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value.toLowerCase())}
+                    onChange={(e) => handleEmailChange('email', e.target.value)}
                    
                   />
                 </div>
@@ -2268,7 +2338,7 @@ export default function FormularioPage() {
                       <Input
                         type="email"
                         value={formData.sponsorEmail}
-                        onChange={(e) => handleInputChange('sponsorEmail', e.target.value.toLowerCase())}
+                        onChange={(e) => handleEmailChange('sponsorEmail', e.target.value)}
                         placeholder="exemplo@email.com"
                       />
                     </div>
@@ -2391,7 +2461,7 @@ export default function FormularioPage() {
               {/* Travel Companions */}
               <div className="pt-4 border-t">
                 <div className="space-y-2">
-                  <Label>Existem pessoas que irão com você?</Label>
+                  <Label>Existem pessoas que irão com você? *</Label>
                   <Select
                     value={formData.travelCompanions}
                     onValueChange={(value) => handleSelectChange('travelCompanions', value)}
@@ -2409,7 +2479,7 @@ export default function FormularioPage() {
                 {formData.travelCompanions === 'SIM' && (
                   <div className="space-y-4 mt-4">
                     <div className="space-y-2">
-                      <Label>É grupo ou organização?</Label>
+                      <Label>É grupo ou organização? *</Label>
                       <Select
                         value={formData.isGroup}
                         onValueChange={(value) => handleSelectChange('isGroup', value)}
@@ -2697,7 +2767,7 @@ export default function FormularioPage() {
                         <Input
                           type="email"
                           value={formData.fatherUSAEmail}
-                          onChange={(e) => handleInputChange('fatherUSAEmail', e.target.value.toLowerCase())}
+                          onChange={(e) => handleEmailChange('fatherUSAEmail', e.target.value)}
                           placeholder="email@exemplo.com"
                         />
                       </div>
@@ -2782,7 +2852,7 @@ export default function FormularioPage() {
                         <Input
                           type="email"
                           value={formData.motherUSAEmail}
-                          onChange={(e) => handleInputChange('motherUSAEmail', e.target.value.toLowerCase())}
+                          onChange={(e) => handleEmailChange('motherUSAEmail', e.target.value)}
                           placeholder="email@exemplo.com"
                         />
                       </div>
@@ -2833,7 +2903,7 @@ export default function FormularioPage() {
                         <Input
                           type="email"
                           value={formData.relativeEmail}
-                          onChange={(e) => handleInputChange('relativeEmail', e.target.value.toLowerCase())}
+                          onChange={(e) => handleEmailChange('relativeEmail', e.target.value)}
                           placeholder="exemplo@email.com"
                         />
                       </div>
@@ -3192,7 +3262,8 @@ export default function FormularioPage() {
                   <Label>Remuneração (R$) {formData.jobTitle && formData.jobTitle.toUpperCase().includes('ESTUDANTE') ? '' : '*'}</Label>
                   <Input
                     value={formData.companySalary}
-                    onChange={(e) => handleInputChange('companySalary', e.target.value)}
+                    onChange={(e) => handleSalaryChange('companySalary', e.target.value)}
+                    placeholder="0,00"
                   />
                 </div>
               </div>
@@ -3208,10 +3279,11 @@ export default function FormularioPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Ganho extra</Label>
+                  <Label>Ganho extra (R$)</Label>
                   <Input
                     value={formData.extraIncomeAmount}
-                    onChange={(e) => handleInputChange('extraIncomeAmount', e.target.value)}
+                    onChange={(e) => handleSalaryChange('extraIncomeAmount', e.target.value)}
+                    placeholder="0,00"
                   />
                 </div>
                 <div className="space-y-2">
@@ -3382,7 +3454,8 @@ export default function FormularioPage() {
                           <Label>Remuneração (R$) *</Label>
                           <Input
                             value={job.companySalary}
-                            onChange={(e) => updatePrevJob(index, 'companySalary', e.target.value)}
+                            onChange={(e) => handlePrevJobSalaryChange(index, e.target.value)}
+                            placeholder="0,00"
                           />
                         </div>
                       </div>
@@ -3718,7 +3791,7 @@ export default function FormularioPage() {
                       <Input
                         type="email"
                         value={formData.i20SchoolEmail}
-                        onChange={(e) => handleInputChange('i20SchoolEmail', e.target.value.toLowerCase())}
+                        onChange={(e) => handleEmailChange('i20SchoolEmail', e.target.value)}
                       />
                     </div>
                   </div>
