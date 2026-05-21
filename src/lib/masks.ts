@@ -171,6 +171,12 @@ export function cleanPhone(value: string): string {
   return value.replace(/\D/g, '');
 }
 
+// Clean CEP/ZIP code - remove all non-digit characters
+export function cleanCEP(value: string): string {
+  if (!value) return '';
+  return value.replace(/\D/g, '');
+}
+
 // Format date for display
 export function formatDate(date: { seconds?: number; nanoseconds?: number } | Date | string | null | undefined): string {
   if (!date) return '-';

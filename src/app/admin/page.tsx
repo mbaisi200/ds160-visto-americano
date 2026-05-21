@@ -51,7 +51,7 @@ import {
   FileDown,
   CheckCircle
 } from 'lucide-react';
-import { formatDateToBrazilian, formatDate, formatDateForTXT, cleanPhone, maskCPF, getBrazilDateTimeString } from '@/lib/masks';
+import { formatDateToBrazilian, formatDate, formatDateForTXT, cleanPhone, cleanCEP, maskCPF, getBrazilDateTimeString } from '@/lib/masks';
 import { toast } from 'sonner';
 
 interface Formulario {
@@ -147,8 +147,12 @@ export default function AdminPage() {
         id: doc.id,
         ...doc.data()
       })) as Formulario[];
-      // Sort in memory
+      // Sort in memory: Rascunho primeiro, Pendente segundo, Processado terceiro
+      const statusOrder: Record<string, number> = { rascunho: 0, pendente: 1, processado: 2 };
       formsData.sort((a, b) => {
+        const orderA = statusOrder[a.status] ?? 999;
+        const orderB = statusOrder[b.status] ?? 999;
+        if (orderA !== orderB) return orderA - orderB;
         const dateA = a.createdAt?.seconds || 0;
         const dateB = b.createdAt?.seconds || 0;
         return dateB - dateA;
@@ -509,6 +513,8 @@ export default function AdminPage() {
         if (cpfDoc.exists()) {
           await updateDoc(doc(db, 'authorized_cpfs', cpf), {
             blocked: true,
+            processed: true,
+            processedAt: new Date(),
             blockedAt: new Date(),
             blockedReason: 'Formulário processado'
           });
@@ -535,6 +541,9 @@ export default function AdminPage() {
 
     // Helper para telefone limpo
     const phoneClean = (value: unknown) => value && typeof value === 'string' ? cleanPhone(value) : '';
+
+    // Helper para CEP limpo
+    const cepClean = (value: unknown) => value && typeof value === 'string' ? cleanCEP(value) : '';
 
     // CPF sem pontuação
     const cpfLimpo = form.cpf.replace(/\D/g, '');
@@ -598,7 +607,7 @@ export default function AdminPage() {
     addField('2. INFORMAÇÕES DE CONTATO', 'Bairro', get('neighborhood'));
     addField('2. INFORMAÇÕES DE CONTATO', 'Cidade', get('city'));
     addField('2. INFORMAÇÕES DE CONTATO', 'Estado', get('contactState'));
-    addField('2. INFORMAÇÕES DE CONTATO', 'CEP', get('zipCode'));
+    addField('2. INFORMAÇÕES DE CONTATO', 'CEP', cepClean(dados.zipCode));
     addField('2. INFORMAÇÕES DE CONTATO', 'País', get('country'));
     addField('2. INFORMAÇÕES DE CONTATO', 'Telefone Principal', phoneClean(dados.phone1));
     addField('2. INFORMAÇÕES DE CONTATO', 'Telefone Opcional', phoneClean(dados.phone2));
@@ -622,7 +631,7 @@ export default function AdminPage() {
       addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Bairro', get('corrNeighborhood'));
       addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Cidade', get('corrCity'));
       addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Estado', get('corrState'));
-      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'CEP', get('corrZipCode'));
+      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'CEP', cepClean(dados.corrZipCode));
       addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'País', get('corrCountry'));
     }
 
@@ -661,7 +670,7 @@ export default function AdminPage() {
       addField('6. VIAGEM', 'Relação com o Patrocinador', get('sponsorRelation'));
       addField('6. VIAGEM', 'Cidade do Patrocinador', get('sponsorCity'));
       addField('6. VIAGEM', 'Estado do Patrocinador', get('sponsorState'));
-      addField('6. VIAGEM', 'CEP do Patrocinador', get('sponsorZipCode'));
+      addField('6. VIAGEM', 'CEP do Patrocinador', cepClean(dados.sponsorZipCode));
       addField('6. VIAGEM', 'País do Patrocinador', get('sponsorCountry'));
     }
     addField('6. VIAGEM', 'Sabe o endereço nos EUA', get('knowsUSAddress'));
@@ -671,7 +680,7 @@ export default function AdminPage() {
       addField('6. VIAGEM', 'Endereço nos EUA - Complemento', get('usComplement'));
       addField('6. VIAGEM', 'Endereço nos EUA - Cidade', get('usCity'));
       addField('6. VIAGEM', 'Endereço nos EUA - Estado', get('usState'));
-      addField('6. VIAGEM', 'Endereço nos EUA - CEP', get('usZipCode'));
+      addField('6. VIAGEM', 'Endereço nos EUA - CEP', cepClean(dados.usZipCode));
     }
     addField('6. VIAGEM', 'Viaja com companheiros', get('travelCompanions'));
     if (get('travelCompanions') === 'SIM') {
@@ -713,7 +722,7 @@ export default function AdminPage() {
     addField('8. INFORMAÇÕES FAMILIARES', 'Pai reside nos EUA', get('fatherInUSA'));
     if (get('fatherInUSA') === 'SIM') {
       addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Pai nos EUA', get('fatherUSAAddress'));
-      addField('8. INFORMAÇÕES FAMILIARES', 'CEP do Pai nos EUA', get('fatherUSAZipCode'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'CEP do Pai nos EUA', cepClean(dados.fatherUSAZipCode));
       addField('8. INFORMAÇÕES FAMILIARES', 'Telefone do Pai nos EUA', phoneClean(dados.fatherUSAPhone));
       addField('8. INFORMAÇÕES FAMILIARES', 'E-mail do Pai', emailToLower(dados.fatherUSAEmail));
     }
@@ -723,7 +732,7 @@ export default function AdminPage() {
     addField('8. INFORMAÇÕES FAMILIARES', 'Mãe reside nos EUA', get('motherInUSA'));
     if (get('motherInUSA') === 'SIM') {
       addField('8. INFORMAÇÕES FAMILIARES', 'Endereço da Mãe nos EUA', get('motherUSAAddress'));
-      addField('8. INFORMAÇÕES FAMILIARES', 'CEP da Mãe nos EUA', get('motherUSAZipCode'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'CEP da Mãe nos EUA', cepClean(dados.motherUSAZipCode));
       addField('8. INFORMAÇÕES FAMILIARES', 'Telefone da Mãe nos EUA', phoneClean(dados.motherUSAPhone));
       addField('8. INFORMAÇÕES FAMILIARES', 'E-mail da Mãe', emailToLower(dados.motherUSAEmail));
     }
@@ -735,7 +744,7 @@ export default function AdminPage() {
       addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Parente', get('relativeAddress'));
       addField('8. INFORMAÇÕES FAMILIARES', 'Cidade do Parente', get('relativeCity'));
       addField('8. INFORMAÇÕES FAMILIARES', 'Estado do Parente', get('relativeState'));
-      addField('8. INFORMAÇÕES FAMILIARES', 'CEP do Parente', get('relativeZipCode'));
+      addField('8. INFORMAÇÕES FAMILIARES', 'CEP do Parente', cepClean(dados.relativeZipCode));
       addField('8. INFORMAÇÕES FAMILIARES', 'Telefone do Parente', phoneClean(dados.relativePhone));
       addField('8. INFORMAÇÕES FAMILIARES', 'E-mail do Parente', emailToLower(dados.relativeEmail));
     }
@@ -752,7 +761,7 @@ export default function AdminPage() {
         addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Bairro', get('spouseNeighborhood'));
         addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Cidade', get('spouseCity'));
         addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Estado', get('spouseState'));
-        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - CEP', get('spouseZipCode'));
+        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - CEP', cepClean(dados.spouseZipCode));
       }
     }
     addField('8. INFORMAÇÕES FAMILIARES', 'Já foi casado(a) anteriormente', get('wasMarried'));
@@ -773,7 +782,7 @@ export default function AdminPage() {
     addField('9. OCUPAÇÃO ATUAL', 'Endereço da Empresa', get('companyAddress'));
     addField('9. OCUPAÇÃO ATUAL', 'Cidade da Empresa', get('companyCity'));
     addField('9. OCUPAÇÃO ATUAL', 'Estado da Empresa', get('companyState'));
-    addField('9. OCUPAÇÃO ATUAL', 'CEP da Empresa', get('companyZip'));
+    addField('9. OCUPAÇÃO ATUAL', 'CEP da Empresa', cepClean(dados.companyZip));
     addField('9. OCUPAÇÃO ATUAL', 'Telefone da Empresa', phoneClean(dados.companyPhone));
     addField('9. OCUPAÇÃO ATUAL', 'Data de Início na Empresa', formatDateForTXT(get('companyStartDate')));
     addField('9. OCUPAÇÃO ATUAL', 'Descrição das Funções/Curso e Período', get('jobDescription'));
@@ -793,7 +802,7 @@ export default function AdminPage() {
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Bairro da Empresa`, job.companyNeighborhood || '');
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Cidade da Empresa`, job.companyCity || '');
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Estado da Empresa`, job.companyState || '');
-        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}CEP da Empresa`, job.companyZip || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}CEP da Empresa`, cepClean(job.companyZip));
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Telefone da Empresa`, cleanPhone(job.companyPhone || ''));
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}País da Empresa`, job.companyCountry || '');
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data de Início`, formatDateForTXT(job.startDate || ''));
@@ -811,7 +820,7 @@ export default function AdminPage() {
       addField('11. UNIVERSITÁRIO', 'Endereço da Instituição', get('universityAddress'));
       addField('11. UNIVERSITÁRIO', 'Cidade da Instituição', get('universityCity'));
       addField('11. UNIVERSITÁRIO', 'Estado da Instituição', get('universityState'));
-      addField('11. UNIVERSITÁRIO', 'CEP da Instituição', get('universityZip'));
+      addField('11. UNIVERSITÁRIO', 'CEP da Instituição', cepClean(dados.universityZip));
       addField('11. UNIVERSITÁRIO', 'Curso', get('universityCourse'));
       addField('11. UNIVERSITÁRIO', 'Data de Início', formatDateForTXT(get('universityStartDate')));
       addField('11. UNIVERSITÁRIO', 'Data de Conclusão', formatDateForTXT(get('universityEndDate')));
@@ -823,7 +832,7 @@ export default function AdminPage() {
           addField('11. UNIVERSITÁRIO', `${prefix}Endereço da Instituição`, school.address || '');
           addField('11. UNIVERSITÁRIO', `${prefix}Cidade da Instituição`, school.city || '');
           addField('11. UNIVERSITÁRIO', `${prefix}Estado da Instituição`, school.state || '');
-          addField('11. UNIVERSITÁRIO', `${prefix}CEP da Instituição`, school.zip || '');
+          addField('11. UNIVERSITÁRIO', `${prefix}CEP da Instituição`, cepClean(school.zip));
           addField('11. UNIVERSITÁRIO', `${prefix}Curso`, school.course || '');
           addField('11. UNIVERSITÁRIO', `${prefix}Data de Início`, formatDateForTXT(school.startDate || ''));
           addField('11. UNIVERSITÁRIO', `${prefix}Data de Conclusão`, formatDateForTXT(school.endDate || ''));
@@ -1474,10 +1483,10 @@ export default function AdminPage() {
                           </td>
                           <td className="py-3 px-4 sm:px-2">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              cpf.processed ? 'bg-purple-100 text-purple-800' :
+                              cpf.processed || cpf.blockedReason === 'Formulário processado' ? 'bg-purple-100 text-purple-800' :
                               cpf.blocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
                             }`}>
-                              {cpf.processed ? 'PROCESSADO' : cpf.blocked ? 'BLOQUEADO' : 'ATIVO'}
+                              {cpf.processed || cpf.blockedReason === 'Formulário processado' ? 'PROCESSADO' : cpf.blocked ? 'BLOQUEADO' : 'ATIVO'}
                             </span>
                           </td>
                           <td className="py-3 px-4 sm:px-2">

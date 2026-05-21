@@ -51,7 +51,7 @@ import {
   Plus,
   Trash2
 } from 'lucide-react';
-import { removeAccents, formatDateToBrazilian, formatDateForTXT, cleanPhone, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF, getBrazilDateTimeString, maskCEP } from '@/lib/masks';
+import { removeAccents, formatDateToBrazilian, formatDateForTXT, cleanPhone, cleanCEP, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF, getBrazilDateTimeString, maskCEP } from '@/lib/masks';
 import { toast } from 'sonner';
 
 interface PrevJob {
@@ -1083,7 +1083,7 @@ export default function FormularioPage() {
     addField('2. INFORMAÇÕES DE CONTATO', 'Bairro', formData.neighborhood);
     addField('2. INFORMAÇÕES DE CONTATO', 'Cidade', formData.city);
     addField('2. INFORMAÇÕES DE CONTATO', 'Estado', formData.contactState);
-    addField('2. INFORMAÇÕES DE CONTATO', 'CEP', formData.zipCode);
+    addField('2. INFORMAÇÕES DE CONTATO', 'CEP', cleanCEP(formData.zipCode));
     addField('2. INFORMAÇÕES DE CONTATO', 'País', formData.country);
     addField('2. INFORMAÇÕES DE CONTATO', 'Telefone Principal', cleanPhone(formData.phone1));
     addField('2. INFORMAÇÕES DE CONTATO', 'Telefone Opcional', cleanPhone(formData.phone2));
@@ -1107,7 +1107,7 @@ export default function FormularioPage() {
       addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Bairro', formData.corrNeighborhood);
       addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Cidade', formData.corrCity);
       addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'Estado', formData.corrState);
-      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'CEP', formData.corrZipCode);
+      addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'CEP', cleanCEP(formData.corrZipCode));
       addField('3. ENDEREÇO DE CORRESPONDÊNCIA', 'País', formData.corrCountry);
     }
 
@@ -1145,7 +1145,7 @@ export default function FormularioPage() {
       addField('6. VIAGEM', 'Relação com o Patrocinador', formData.sponsorRelation);
       addField('6. VIAGEM', 'Cidade do Patrocinador', formData.sponsorCity);
       addField('6. VIAGEM', 'Estado do Patrocinador', formData.sponsorState);
-      addField('6. VIAGEM', 'CEP do Patrocinador', formData.sponsorZipCode);
+      addField('6. VIAGEM', 'CEP do Patrocinador', cleanCEP(formData.sponsorZipCode));
       addField('6. VIAGEM', 'País do Patrocinador', formData.sponsorCountry);
     }
     addField('6. VIAGEM', 'Sabe o endereço nos EUA', formData.knowsUSAddress);
@@ -1155,7 +1155,7 @@ export default function FormularioPage() {
       addField('6. VIAGEM', 'Endereço nos EUA - Complemento', formData.usComplement);
       addField('6. VIAGEM', 'Endereço nos EUA - Cidade', formData.usCity);
       addField('6. VIAGEM', 'Endereço nos EUA - Estado', formData.usState);
-      addField('6. VIAGEM', 'Endereço nos EUA - CEP', formData.usZipCode);
+      addField('6. VIAGEM', 'Endereço nos EUA - CEP', cleanCEP(formData.usZipCode));
     }
     addField('6. VIAGEM', 'Viaja com companheiros', formData.travelCompanions);
     if (formData.travelCompanions === 'SIM') {
@@ -1194,7 +1194,7 @@ export default function FormularioPage() {
     addField('8. INFORMAÇÕES FAMILIARES', 'Pai reside nos EUA', formData.fatherInUSA);
     if (formData.fatherInUSA === 'SIM') {
       addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Pai nos EUA', formData.fatherUSAAddress);
-      addField('8. INFORMAÇÕES FAMILIARES', 'CEP do Pai nos EUA', formData.fatherUSAZipCode);
+      addField('8. INFORMAÇÕES FAMILIARES', 'CEP do Pai nos EUA', cleanCEP(formData.fatherUSAZipCode));
       addField('8. INFORMAÇÕES FAMILIARES', 'Telefone do Pai nos EUA', cleanPhone(formData.fatherUSAPhone));
       addField('8. INFORMAÇÕES FAMILIARES', 'E-mail do Pai', emailToLower(formData.fatherUSAEmail));
     }
@@ -1204,7 +1204,7 @@ export default function FormularioPage() {
     addField('8. INFORMAÇÕES FAMILIARES', 'Mãe reside nos EUA', formData.motherInUSA);
     if (formData.motherInUSA === 'SIM') {
       addField('8. INFORMAÇÕES FAMILIARES', 'Endereço da Mãe nos EUA', formData.motherUSAAddress);
-      addField('8. INFORMAÇÕES FAMILIARES', 'CEP da Mãe nos EUA', formData.motherUSAZipCode);
+      addField('8. INFORMAÇÕES FAMILIARES', 'CEP da Mãe nos EUA', cleanCEP(formData.motherUSAZipCode));
       addField('8. INFORMAÇÕES FAMILIARES', 'Telefone da Mãe nos EUA', cleanPhone(formData.motherUSAPhone));
       addField('8. INFORMAÇÕES FAMILIARES', 'E-mail da Mãe', emailToLower(formData.motherUSAEmail));
     }
@@ -1216,7 +1216,7 @@ export default function FormularioPage() {
       addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Parente', formData.relativeAddress);
       addField('8. INFORMAÇÕES FAMILIARES', 'Cidade do Parente', formData.relativeCity);
       addField('8. INFORMAÇÕES FAMILIARES', 'Estado do Parente', formData.relativeState);
-      addField('8. INFORMAÇÕES FAMILIARES', 'CEP do Parente', formData.relativeZipCode);
+      addField('8. INFORMAÇÕES FAMILIARES', 'CEP do Parente', cleanCEP(formData.relativeZipCode));
       addField('8. INFORMAÇÕES FAMILIARES', 'Telefone do Parente', cleanPhone(formData.relativePhone));
       addField('8. INFORMAÇÕES FAMILIARES', 'E-mail do Parente', emailToLower(formData.relativeEmail));
     }
@@ -1233,7 +1233,7 @@ export default function FormularioPage() {
         addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Bairro', formData.spouseNeighborhood);
         addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Cidade', formData.spouseCity);
         addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - Estado', formData.spouseState);
-        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - CEP', formData.spouseZipCode);
+        addField('8. INFORMAÇÕES FAMILIARES', 'Endereço do Cônjuge - CEP', cleanCEP(formData.spouseZipCode));
       }
     }
     addField('8. INFORMAÇÕES FAMILIARES', 'Já foi casado(a) anteriormente', formData.wasMarried);
@@ -1254,7 +1254,7 @@ export default function FormularioPage() {
     addField('9. OCUPAÇÃO ATUAL', 'Endereço da Empresa', formData.companyAddress);
     addField('9. OCUPAÇÃO ATUAL', 'Cidade da Empresa', formData.companyCity);
     addField('9. OCUPAÇÃO ATUAL', 'Estado da Empresa', formData.companyState);
-    addField('9. OCUPAÇÃO ATUAL', 'CEP da Empresa', formData.companyZip);
+    addField('9. OCUPAÇÃO ATUAL', 'CEP da Empresa', cleanCEP(formData.companyZip));
     addField('9. OCUPAÇÃO ATUAL', 'Telefone da Empresa', cleanPhone(formData.companyPhone));
     addField('9. OCUPAÇÃO ATUAL', 'Data de Início na Empresa', formatDateForTXT(formData.companyStartDate));
     addField('9. OCUPAÇÃO ATUAL', 'Descrição das Funções/Curso e Período', formData.jobDescription);
@@ -1273,7 +1273,7 @@ export default function FormularioPage() {
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Bairro da Empresa`, job.companyNeighborhood);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Cidade da Empresa`, job.companyCity);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Estado da Empresa`, job.companyState);
-        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}CEP da Empresa`, job.companyZip);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}CEP da Empresa`, cleanCEP(job.companyZip));
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Telefone da Empresa`, cleanPhone(job.companyPhone));
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}País da Empresa`, job.companyCountry);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data de Início`, formatDateForTXT(job.startDate));
@@ -1291,7 +1291,7 @@ export default function FormularioPage() {
       addField('11. UNIVERSITÁRIO', 'Endereço da Instituição', formData.universityAddress);
       addField('11. UNIVERSITÁRIO', 'Cidade da Instituição', formData.universityCity);
       addField('11. UNIVERSITÁRIO', 'Estado da Instituição', formData.universityState);
-      addField('11. UNIVERSITÁRIO', 'CEP da Instituição', formData.universityZip);
+      addField('11. UNIVERSITÁRIO', 'CEP da Instituição', cleanCEP(formData.universityZip));
       addField('11. UNIVERSITÁRIO', 'Curso', formData.universityCourse);
       addField('11. UNIVERSITÁRIO', 'Data de Início', formatDateForTXT(formData.universityStartDate));
       addField('11. UNIVERSITÁRIO', 'Data de Conclusão', formatDateForTXT(formData.universityEndDate));
@@ -1302,7 +1302,7 @@ export default function FormularioPage() {
           addField('11. UNIVERSITÁRIO', `${prefix}Endereço da Instituição`, school.address);
           addField('11. UNIVERSITÁRIO', `${prefix}Cidade da Instituição`, school.city);
           addField('11. UNIVERSITÁRIO', `${prefix}Estado da Instituição`, school.state);
-          addField('11. UNIVERSITÁRIO', `${prefix}CEP da Instituição`, school.zip);
+          addField('11. UNIVERSITÁRIO', `${prefix}CEP da Instituição`, cleanCEP(school.zip));
           addField('11. UNIVERSITÁRIO', `${prefix}Curso`, school.course);
           addField('11. UNIVERSITÁRIO', `${prefix}Data de Início`, formatDateForTXT(school.startDate));
           addField('11. UNIVERSITÁRIO', `${prefix}Data de Conclusão`, formatDateForTXT(school.endDate));
