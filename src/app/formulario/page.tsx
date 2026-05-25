@@ -610,9 +610,11 @@ export default function FormularioPage() {
   const maskCurrencyBR = (value: string): string => {
     const digits = value.replace(/\D/g, '');
     if (!digits) return '';
-    const padded = digits.padStart(3, '0');
-    const integer = padded.slice(0, -2);
-    const decimal = padded.slice(-2);
+    if (digits.length <= 2) {
+      return `0,${digits.padStart(2, '0')}`;
+    }
+    const integer = digits.slice(0, -2);
+    const decimal = digits.slice(-2);
     const formattedInt = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return `${formattedInt},${decimal}`;
   };
@@ -622,17 +624,6 @@ export default function FormularioPage() {
     setFormData(prev => ({
       ...prev,
       [field]: masked
-    }));
-  };
-
-  // Handler específico para salary em prevJobsList
-  const handlePrevJobSalaryChange = (index: number, value: string) => {
-    const masked = maskCurrencyBR(value);
-    setFormData(prev => ({
-      ...prev,
-      prevJobsList: prev.prevJobsList.map((item, i) =>
-        i === index ? { ...item, companySalary: masked } : item
-      )
     }));
   };
 
@@ -721,6 +712,16 @@ export default function FormularioPage() {
     if (!formData.knowsArrivalDate) errors.push('Sabe a data de chegada?');
     if (formData.knowsArrivalDate === 'SIM' && !formData.arrivalDate) errors.push('Data de chegada pretendida');
     if (!formData.knowsUSAddress) errors.push('Sabe o endereço nos EUA?');
+    if (formData.travelSponsor === 'OUTROS') {
+      if (!formData.sponsorName) errors.push('Nome do Patrocinador');
+      if (!formData.sponsorPhone) errors.push('Telefone do Patrocinador');
+      if (!formData.sponsorEmail) errors.push('E-mail do Patrocinador');
+      if (!formData.sponsorRelation) errors.push('Relação com o Patrocinador');
+      if (!formData.sponsorCity) errors.push('Cidade do Patrocinador');
+      if (!formData.sponsorState) errors.push('Estado do Patrocinador');
+      if (!formData.sponsorZipCode) errors.push('CEP do Patrocinador');
+      if (!formData.sponsorCountry) errors.push('País do Patrocinador');
+    }
     if (!formData.travelCompanions) errors.push('Existem pessoas que irão viajar com você?');
     if (formData.travelCompanions === 'SIM' && !formData.isGroup) errors.push('É grupo ou organização?');
 
@@ -810,7 +811,6 @@ export default function FormularioPage() {
           if (!job.companyZip) errors.push(`Ocupação anterior ${index + 1}: CEP`);
           if (!job.startDate) errors.push(`Ocupação anterior ${index + 1}: Data de início`);
           if (!job.endDate) errors.push(`Ocupação anterior ${index + 1}: Data de término`);
-          if (!job.companySalary) errors.push(`Ocupação anterior ${index + 1}: Remuneração`);
           if (!job.jobDescription) errors.push(`Ocupação anterior ${index + 1}: Descrição das funções`);
           if (!job.supervisorName) errors.push(`Ocupação anterior ${index + 1}: Nome do supervisor`);
         });
@@ -1053,6 +1053,131 @@ export default function FormularioPage() {
     }
   };
 
+  const lookupCompanyCEP = useCallback(async (cep: string) => {
+    const clean = cep.replace(/\D/g, '');
+    if (clean.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      const data = await res.json();
+      if (data.erro) return;
+      const toUpper = (s: string) => removeAccents((s || '').toUpperCase());
+      setFormData(prev => ({
+        ...prev,
+        companyAddress: toUpper(data.logradouro),
+        companyCity: toUpper(data.localidade),
+        companyState: data.uf,
+      }));
+    } catch {}
+  }, []);
+
+  const handleCompanyCEPChange = (value: string) => {
+    const masked = maskCEP(value);
+    setFormData(prev => ({ ...prev, companyZip: masked }));
+    const clean = masked.replace(/\D/g, '');
+    if (clean.length === 8) {
+      lookupCompanyCEP(masked);
+    }
+  };
+
+  const lookupPrevJobCEP = useCallback(async (index: number, cep: string) => {
+    const clean = cep.replace(/\D/g, '');
+    if (clean.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      const data = await res.json();
+      if (data.erro) return;
+      const toUpper = (s: string) => removeAccents((s || '').toUpperCase());
+      setFormData(prev => ({
+        ...prev,
+        prevJobsList: prev.prevJobsList.map((item, i) =>
+          i === index ? {
+            ...item,
+            companyAddress: toUpper(data.logradouro),
+            companyNeighborhood: toUpper(data.bairro),
+            companyCity: toUpper(data.localidade),
+            companyState: data.uf,
+          } : item
+        )
+      }));
+    } catch {}
+  }, []);
+
+  const handlePrevJobCEPChange = (index: number, value: string) => {
+    const masked = maskCEP(value);
+    setFormData(prev => ({
+      ...prev,
+      prevJobsList: prev.prevJobsList.map((item, i) =>
+        i === index ? { ...item, companyZip: masked } : item
+      )
+    }));
+    const clean = masked.replace(/\D/g, '');
+    if (clean.length === 8) {
+      lookupPrevJobCEP(index, masked);
+    }
+  };
+
+  const lookupUniversityCEP = useCallback(async (cep: string) => {
+    const clean = cep.replace(/\D/g, '');
+    if (clean.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      const data = await res.json();
+      if (data.erro) return;
+      const toUpper = (s: string) => removeAccents((s || '').toUpperCase());
+      setFormData(prev => ({
+        ...prev,
+        universityAddress: toUpper(data.logradouro),
+        universityCity: toUpper(data.localidade),
+        universityState: data.uf,
+      }));
+    } catch {}
+  }, []);
+
+  const handleUniversityCEPChange = (value: string) => {
+    const masked = maskCEP(value);
+    setFormData(prev => ({ ...prev, universityZip: masked }));
+    const clean = masked.replace(/\D/g, '');
+    if (clean.length === 8) {
+      lookupUniversityCEP(masked);
+    }
+  };
+
+  const lookupSchoolCEP = useCallback(async (index: number, cep: string) => {
+    const clean = cep.replace(/\D/g, '');
+    if (clean.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      const data = await res.json();
+      if (data.erro) return;
+      const toUpper = (s: string) => removeAccents((s || '').toUpperCase());
+      setFormData(prev => ({
+        ...prev,
+        schoolsList: prev.schoolsList.map((item, i) =>
+          i === index ? {
+            ...item,
+            address: toUpper(data.logradouro),
+            city: toUpper(data.localidade),
+            state: data.uf,
+          } : item
+        )
+      }));
+    } catch {}
+  }, []);
+
+  const handleSchoolCEPChange = (index: number, value: string) => {
+    const masked = maskCEP(value);
+    setFormData(prev => ({
+      ...prev,
+      schoolsList: prev.schoolsList.map((item, i) =>
+        i === index ? { ...item, zip: masked } : item
+      )
+    }));
+    const clean = masked.replace(/\D/g, '');
+    if (clean.length === 8) {
+      lookupSchoolCEP(index, masked);
+    }
+  };
+
   const generateTXT = () => {
     const sections: { [key: string]: string[] } = {
       '0. LOCAL DE SOLICITAÇÃO': [],
@@ -1145,8 +1270,10 @@ export default function FormularioPage() {
     }
 
     // Section 5 - Passaporte
-    addField('5. PASSAPORTE', 'Série', formData.passportSeries);
-    addField('5. PASSAPORTE', 'Número', formData.passportNumber);
+    const serieNumero = [formData.passportSeries, formData.passportNumber].filter(Boolean).join('');
+    if (serieNumero) {
+      addField('5. PASSAPORTE', 'Série/Número', serieNumero);
+    }
     addField('5. PASSAPORTE', 'Cidade de Emissão', formData.passportIssueCity);
     addField('5. PASSAPORTE', 'Estado de Emissão', formData.passportIssueState);
     addField('5. PASSAPORTE', 'Data de Emissão', formatDateForTXT(formData.passportIssueDate));
@@ -1302,7 +1429,6 @@ export default function FormularioPage() {
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}País da Empresa`, job.companyCountry);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data de Início`, formatDateForTXT(job.startDate));
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Data de Término`, formatDateForTXT(job.endDate));
-        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Remuneração Mensal`, job.companySalary);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Nome do Supervisor`, job.supervisorName);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Descrição das Funções`, job.jobDescription);
       });
@@ -2342,14 +2468,14 @@ export default function FormularioPage() {
                 <div className="space-y-4 pl-4 border-l-2 border-gray-200">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Nome do Patrocinador</Label>
+                      <Label>Nome do Patrocinador *</Label>
                       <Input
                         value={formData.sponsorName}
                         onChange={(e) => handleInputChange('sponsorName', e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Telefone</Label>
+                      <Label>Telefone *</Label>
                       <Input
                         value={formData.sponsorPhone}
                         onChange={(e) => handleInputChange('sponsorPhone', e.target.value)}
@@ -2358,7 +2484,7 @@ export default function FormularioPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>E-mail do Patrocinador</Label>
+                      <Label>E-mail do Patrocinador *</Label>
                       <Input
                         type="email"
                         value={formData.sponsorEmail}
@@ -2367,7 +2493,7 @@ export default function FormularioPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Relação com você</Label>
+                      <Label>Relação com você *</Label>
                       <Input
                         value={formData.sponsorRelation}
                         onChange={(e) => handleInputChange('sponsorRelation', e.target.value)}
@@ -2376,14 +2502,14 @@ export default function FormularioPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Cidade</Label>
+                      <Label>Cidade *</Label>
                       <Input
                         value={formData.sponsorCity}
                         onChange={(e) => handleInputChange('sponsorCity', e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Estado</Label>
+                      <Label>Estado *</Label>
                       <Input
                         value={formData.sponsorState}
                         onChange={(e) => handleInputChange('sponsorState', e.target.value)}
@@ -2392,14 +2518,14 @@ export default function FormularioPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>CEP</Label>
+                      <Label>CEP *</Label>
                       <Input
                         value={formData.sponsorZipCode}
                         onChange={(e) => handleInputChange('sponsorZipCode', e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>País</Label>
+                      <Label>País *</Label>
                       <Input
                         value={formData.sponsorCountry}
                         onChange={(e) => handleInputChange('sponsorCountry', e.target.value)}
@@ -3228,22 +3354,21 @@ export default function FormularioPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Endereço *</Label>
-                <Input
-                  value={formData.companyAddress}
-                  onChange={(e) => handleInputChange('companyAddress', e.target.value)}
-                 
-                />
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>CEP *</Label>
+                  <Input
+                    value={formData.companyZip}
+                    onChange={(e) => handleCompanyCEPChange(e.target.value)}
+                    placeholder="00000-000"
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label>Cidade *</Label>
                   <Input
                     value={formData.companyCity}
                     onChange={(e) => handleInputChange('companyCity', e.target.value)}
-                   
+                    
                   />
                 </div>
                 <div className="space-y-2">
@@ -3251,17 +3376,18 @@ export default function FormularioPage() {
                   <Input
                     value={formData.companyState}
                     onChange={(e) => handleInputChange('companyState', e.target.value)}
-                   
+                    
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>CEP *</Label>
-                  <Input
-                    value={formData.companyZip}
-                    onChange={(e) => handleInputChange('companyZip', e.target.value)}
-                   
-                  />
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Endereço *</Label>
+                <Input
+                  value={formData.companyAddress}
+                  onChange={(e) => handleInputChange('companyAddress', e.target.value)}
+                  
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3390,20 +3516,13 @@ export default function FormularioPage() {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>Endereço *</Label>
-                        <Input
-                          value={job.companyAddress}
-                          onChange={(e) => updatePrevJob(index, 'companyAddress', e.target.value)}
-                        />
-                      </div>
-
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                          <Label>Bairro</Label>
+                          <Label>CEP *</Label>
                           <Input
-                            value={job.companyNeighborhood}
-                            onChange={(e) => updatePrevJob(index, 'companyNeighborhood', e.target.value)}
+                            value={job.companyZip}
+                            onChange={(e) => handlePrevJobCEPChange(index, e.target.value)}
+                            placeholder="00000-000"
                           />
                         </div>
                         <div className="space-y-2">
@@ -3422,12 +3541,20 @@ export default function FormularioPage() {
                         </div>
                       </div>
 
+                      <div className="space-y-2">
+                        <Label>Endereço *</Label>
+                        <Input
+                          value={job.companyAddress}
+                          onChange={(e) => updatePrevJob(index, 'companyAddress', e.target.value)}
+                        />
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                          <Label>CEP *</Label>
+                          <Label>Bairro</Label>
                           <Input
-                            value={job.companyZip}
-                            onChange={(e) => updatePrevJob(index, 'companyZip', e.target.value)}
+                            value={job.companyNeighborhood}
+                            onChange={(e) => updatePrevJob(index, 'companyNeighborhood', e.target.value)}
                           />
                         </div>
                         <div className="space-y-2">
@@ -3466,22 +3593,12 @@ export default function FormularioPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Nome completo do Supervisor *</Label>
-                          <Input
-                            value={job.supervisorName}
-                            onChange={(e) => updatePrevJob(index, 'supervisorName', e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Remuneração (R$) *</Label>
-                          <Input
-                            value={job.companySalary}
-                            onChange={(e) => handlePrevJobSalaryChange(index, e.target.value)}
-                            placeholder="0,00"
-                          />
-                        </div>
+                      <div className="space-y-2">
+                        <Label>Nome completo do Supervisor *</Label>
+                        <Input
+                          value={job.supervisorName}
+                          onChange={(e) => updatePrevJob(index, 'supervisorName', e.target.value)}
+                        />
                       </div>
 
                       <div className="space-y-2">
@@ -3544,15 +3661,15 @@ export default function FormularioPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Endereço</Label>
-                    <Input
-                      value={formData.universityAddress}
-                      onChange={(e) => handleInputChange('universityAddress', e.target.value)}
-                    />
-                  </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>CEP</Label>
+                      <Input
+                        value={formData.universityZip}
+                        onChange={(e) => handleUniversityCEPChange(e.target.value)}
+                        placeholder="00000-000"
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label>Cidade</Label>
                       <Input
@@ -3567,13 +3684,14 @@ export default function FormularioPage() {
                         onChange={(e) => handleInputChange('universityState', e.target.value)}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>CEP</Label>
-                      <Input
-                        value={formData.universityZip}
-                        onChange={(e) => handleInputChange('universityZip', e.target.value)}
-                      />
-                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Endereço</Label>
+                    <Input
+                      value={formData.universityAddress}
+                      onChange={(e) => handleInputChange('universityAddress', e.target.value)}
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3626,15 +3744,15 @@ export default function FormularioPage() {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>Endereço</Label>
-                        <Input
-                          value={school.address}
-                          onChange={(e) => updateSchool(index, 'address', e.target.value)}
-                        />
-                      </div>
-
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>CEP</Label>
+                          <Input
+                            value={school.zip}
+                            onChange={(e) => handleSchoolCEPChange(index, e.target.value)}
+                            placeholder="00000-000"
+                          />
+                        </div>
                         <div className="space-y-2">
                           <Label>Cidade</Label>
                           <Input
@@ -3649,13 +3767,14 @@ export default function FormularioPage() {
                             onChange={(e) => updateSchool(index, 'state', e.target.value)}
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label>CEP</Label>
-                          <Input
-                            value={school.zip}
-                            onChange={(e) => updateSchool(index, 'zip', e.target.value)}
-                          />
-                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Endereço</Label>
+                        <Input
+                          value={school.address}
+                          onChange={(e) => updateSchool(index, 'address', e.target.value)}
+                        />
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
