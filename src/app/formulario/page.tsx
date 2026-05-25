@@ -557,6 +557,18 @@ export default function FormularioPage() {
         setExistingFormId(docRef.id);
         existingFormIdRef.current = docRef.id;
       }
+
+      // Atualizar nome do cliente no documento authorized_cpfs
+      try {
+        const cpfNumeros = userData.cpf.replace(/\D/g, '');
+        await updateDoc(doc(db, 'authorized_cpfs', cpfNumeros), {
+          nome: nomeCompleto
+        });
+      } catch (e) {
+        // Falha ao atualizar o nome não deve impedir o salvamento
+        console.error('Erro ao atualizar nome no authorized_cpfs:', e);
+      }
+
       setLastSaved(new Date());
       toast.success('Informações salvas com sucesso!');
     } catch (error) {
@@ -862,6 +874,18 @@ export default function FormularioPage() {
           createdAt: serverTimestamp(),
           status: 'pendente'
         });
+      }
+
+      // Atualizar nome do cliente no documento authorized_cpfs
+      try {
+        const cpfNumeros = userData?.cpf?.replace(/\D/g, '');
+        if (cpfNumeros) {
+          await updateDoc(doc(db, 'authorized_cpfs', cpfNumeros), {
+            nome: nomeCompleto
+          });
+        }
+      } catch (e) {
+        console.error('Erro ao atualizar nome no authorized_cpfs:', e);
       }
 
       setSuccess(true);

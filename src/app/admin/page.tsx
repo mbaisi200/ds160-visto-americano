@@ -30,7 +30,9 @@ import {
   updateDoc,
   setDoc,
   deleteDoc,
-  getDoc
+  getDoc,
+  query,
+  where
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
@@ -165,6 +167,20 @@ export default function AdminPage() {
         id: doc.id,
         ...doc.data()
       })) as AuthorizedCPF[];
+
+      // Map CPF to nome from forms
+      const cpfToNome: Record<string, string> = {};
+      formsData.forEach(f => {
+        if (f.cpf && f.nome && !cpfToNome[f.cpf]) {
+          cpfToNome[f.cpf] = f.nome;
+        }
+      });
+      cpfsData.forEach(cpf => {
+        if (cpf.cpf && cpfToNome[cpf.cpf]) {
+          cpf.nome = cpfToNome[cpf.cpf];
+        }
+      });
+
       setAuthorizedCPFs(cpfsData);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -279,11 +295,50 @@ export default function AdminPage() {
   };
 
   const removeCPF = async (cpf: string) => {
-    if (!confirm('Tem certeza que deseja remover este CPF?')) return;
+    if (!confirm('Tem certeza que deseja remover este CPF? Todas as movimentações (formulários, conta de acesso) serão excluídas permanentemente.')) return;
 
     try {
+      // Buscar dados do CPF antes de excluir
+      const cpfDoc = await getDoc(doc(db, 'authorized_cpfs', cpf));
+      const cpfData = cpfDoc.data();
+      const email = cpfData?.email || `${cpf}@ds160.local`;
+      const userId = cpfData?.userId;
+
+      // 1. Deletar Firebase Auth user via API
+      try {
+        await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete-user', email }),
+        });
+      } catch (e) {
+        console.error('Erro ao deletar auth user:', e);
+      }
+
+      // 2. Deletar documento da coleção users
+      if (userId) {
+        try {
+          await deleteDoc(doc(db, 'users', userId));
+        } catch (e) {
+          console.error('Erro ao deletar documento users:', e);
+        }
+      }
+
+      // 3. Deletar todos os formulários associados a este CPF
+      const formsQuery = query(
+        collection(db, 'ds160_forms'),
+        where('cpf', '==', cpf)
+      );
+      const formsSnapshot = await getDocs(formsQuery);
+      const deletePromises = formsSnapshot.docs.map(formDoc =>
+        deleteDoc(doc(db, 'ds160_forms', formDoc.id))
+      );
+      await Promise.all(deletePromises);
+
+      // 4. Deletar o documento authorized_cpfs
       await deleteDoc(doc(db, 'authorized_cpfs', cpf));
-      toast.success('CPF removido com sucesso');
+
+      toast.success('CPF e todas as movimentações excluídos com sucesso');
       loadData();
     } catch (error) {
       console.error('Error removing CPF:', error);
@@ -1101,7 +1156,9 @@ export default function AdminPage() {
   });
 
   const filteredCPFs = sortedCPFs.filter(c => 
-    c.cpf.includes(searchTerm) || c.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    c.cpf.includes(searchTerm) || 
+    c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.nome?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatCPFDisplay = (cpf: string) => {
@@ -1445,6 +1502,7 @@ export default function AdminPage() {
                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-3 px-4 sm:px-2"><SortHeader field="cpf">CPF</SortHeader></th>
+                        <th className="text-left py-3 px-4 sm:px-2">Nome</th>
                         <th className="text-left py-3 px-4 sm:px-2">Conta</th>
                         <th className="text-left py-3 px-4 sm:px-2">Senha Padrão</th>
                         <th className="text-left py-3 px-4 sm:px-2"><SortHeader field="data">Data de Envio</SortHeader></th>
@@ -1457,6 +1515,13 @@ export default function AdminPage() {
                         <tr key={cpf.id} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4 sm:px-2 font-mono text-sm">
                             {formatCPFDisplay(cpf.cpf)}
+                          </td>
+                          <td className="py-3 px-4 sm:px-2 text-sm">
+                            {cpf.nome ? (
+                              <span className="text-gray-800">{cpf.nome}</span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
                           </td>
                           <td className="py-3 px-4 sm:px-2">
                             {cpf.hasAccount && cpf.email ? (
