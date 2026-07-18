@@ -345,10 +345,6 @@ export const SOCIAL_PLATFORMS = [
   'Facebook',
   'Instagram',
   'LinkedIn',
-  'TikTok',
   'X (Twitter)',
-  'YouTube',
-  'WhatsApp',
-  'Telegram',
-  'Outra'
+  'YouTube'
 ];

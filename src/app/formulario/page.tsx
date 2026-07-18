@@ -102,6 +102,7 @@ interface FormData {
   birthCountry: string;
   cpf: string;
   rg: string;
+  maritalStatus: string;
   // Section 2
   address: string;
   addressNumber: string;
@@ -248,6 +249,7 @@ interface FormData {
   hasUniversity: string;
   universityName: string;
   universityAddress: string;
+  universityNumber: string;
   universityCity: string;
   universityState: string;
   universityZip: string;
@@ -281,6 +283,7 @@ const initialFormData: FormData = {
   birthCountry: 'BRASIL',
   cpf: '',
   rg: '',
+  maritalStatus: '',
   address: '',
   addressNumber: '',
   addressComplement: '',
@@ -417,6 +420,7 @@ const initialFormData: FormData = {
   hasUniversity: '',
   universityName: '',
   universityAddress: '',
+  universityNumber: '',
   universityCity: '',
   universityState: '',
   universityZip: '',
@@ -660,6 +664,7 @@ export default function FormularioPage() {
     if (!formData.firstName) errors.push('Nome');
     if (!formData.birthDate) errors.push('Data de Nascimento');
     if (!formData.birthCity) errors.push('Cidade/Estado de Nascimento');
+    if (!formData.maritalStatus) errors.push('Estado Civil');
 
     // Seção 2 - Contato
     if (!formData.address) errors.push('Endereço');
@@ -819,6 +824,7 @@ export default function FormularioPage() {
 
     // Seção 11 - Universitário
     if (!formData.hasUniversity) errors.push('Frequentou escola ou universidade?');
+    if (formData.hasUniversity === 'SIM' && !formData.universityNumber) errors.push('Número (Universitário)');
 
     return errors;
   };
@@ -1222,12 +1228,13 @@ export default function FormularioPage() {
     addField('1. INFORMAÇÕES PESSOAIS', 'Data de Nascimento', formatDateForTXT(formData.birthDate));
     addField('1. INFORMAÇÕES PESSOAIS', 'Cidade/Estado de Nascimento', formData.birthCity);
     addField('1. INFORMAÇÕES PESSOAIS', 'País de Nascimento', formData.birthCountry);
+    addField('1. INFORMAÇÕES PESSOAIS', 'Estado Civil', formData.maritalStatus);
     addField('1. INFORMAÇÕES PESSOAIS', 'CPF', cpfLimpo);
     addField('1. INFORMAÇÕES PESSOAIS', 'RG', formData.rg);
 
     // Section 2 - Informações de Contato
-    addField('2. INFORMAÇÕES DE CONTATO', 'Endereço', formData.address);
-    addField('2. INFORMAÇÕES DE CONTATO', 'Número', formData.addressNumber);
+    const enderecoCompleto = [formData.address, formData.addressNumber].filter(Boolean).join(', ');
+    addField('2. INFORMAÇÕES DE CONTATO', 'Endereço', enderecoCompleto);
     addField('2. INFORMAÇÕES DE CONTATO', 'Complemento', formData.addressComplement);
     addField('2. INFORMAÇÕES DE CONTATO', 'Bairro', formData.neighborhood);
     addField('2. INFORMAÇÕES DE CONTATO', 'Cidade', formData.city);
@@ -1408,7 +1415,7 @@ export default function FormularioPage() {
     addField('9. OCUPAÇÃO ATUAL', 'CEP da Empresa', cleanCEP(formData.companyZip));
     addField('9. OCUPAÇÃO ATUAL', 'Telefone da Empresa', cleanPhone(formData.companyPhone));
     addField('9. OCUPAÇÃO ATUAL', 'Data de Início na Empresa', formatDateForTXT(formData.companyStartDate));
-    addField('9. OCUPAÇÃO ATUAL', 'Descrição das Funções/Curso e Período', formData.jobDescription);
+    addField('9. OCUPAÇÃO ATUAL', 'Descrição das Funções', formData.jobDescription);
     addField('9. OCUPAÇÃO ATUAL', 'Remuneração Mensal', formData.companySalary);
     addField('9. OCUPAÇÃO ATUAL', 'Valor de Renda Adicional', formData.extraIncomeAmount);
     addField('9. OCUPAÇÃO ATUAL', 'Descrição da Renda Adicional', formData.extraIncomeDescription);
@@ -1438,7 +1445,8 @@ export default function FormularioPage() {
     addField('11. UNIVERSITÁRIO', 'Frequentou escola ou universidade', formData.hasUniversity);
     if (formData.hasUniversity === 'SIM') {
       addField('11. UNIVERSITÁRIO', 'Nome da Instituição', formData.universityName);
-      addField('11. UNIVERSITÁRIO', 'Endereço da Instituição', formData.universityAddress);
+      const universityEnderecoCompleto = [formData.universityAddress, formData.universityNumber].filter(Boolean).join(', ');
+      addField('11. UNIVERSITÁRIO', 'Endereço da Instituição', universityEnderecoCompleto);
       addField('11. UNIVERSITÁRIO', 'Cidade da Instituição', formData.universityCity);
       addField('11. UNIVERSITÁRIO', 'Estado da Instituição', formData.universityState);
       addField('11. UNIVERSITÁRIO', 'CEP da Instituição', cleanCEP(formData.universityZip));
@@ -1933,6 +1941,25 @@ export default function FormularioPage() {
                 <div className="space-y-2">
                   <Label>País de Nascimento</Label>
                   <Input value={formData.birthCountry} readOnly className="bg-gray-100" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Estado Civil *</Label>
+                  <Select
+                    value={formData.maritalStatus}
+                    onValueChange={(value) => handleSelectChange('maritalStatus', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SOLTEIRO(A)">SOLTEIRO(A)</SelectItem>
+                      <SelectItem value="CASADO(A)">CASADO(A)</SelectItem>
+                      <SelectItem value="UNIAO ESTAVEL">UNIÃO ESTÁVEL</SelectItem>
+                      <SelectItem value="DIVORCIADO(A)">DIVORCIADO(A)</SelectItem>
+                      <SelectItem value="VIUVO(A)">VIÚVO(A)</SelectItem>
+                      <SelectItem value="SEPARADO(A)">SEPARADO(A)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -3419,7 +3446,7 @@ export default function FormularioPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Descrição das funções / Curso e período de estudo *</Label>
+                <Label>Descrição das Funções *</Label>
                 <Textarea
                   value={formData.jobDescription}
                   onChange={(e) => handleInputChange('jobDescription', e.target.value)}
@@ -3692,6 +3719,16 @@ export default function FormularioPage() {
                       value={formData.universityAddress}
                       onChange={(e) => handleInputChange('universityAddress', e.target.value)}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Número *</Label>
+                      <Input
+                        value={formData.universityNumber}
+                        onChange={(e) => handleInputChange('universityNumber', e.target.value)}
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
