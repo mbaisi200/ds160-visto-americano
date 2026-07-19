@@ -233,6 +233,7 @@ interface FormData {
   jobTitle: string;
   companyName: string;
   companyAddress: string;
+  companyNumber: string;
   companyCity: string;
   companyState: string;
   companyZip: string;
@@ -406,6 +407,7 @@ const initialFormData: FormData = {
   jobTitle: '',
   companyName: '',
   companyAddress: '',
+  companyNumber: '',
   companyCity: '',
   companyState: '',
   companyZip: '',
@@ -791,6 +793,7 @@ export default function FormularioPage() {
     if (!formData.jobTitle) errors.push('Ocupação');
     if (!formData.companyName) errors.push('Nome da Empresa/Escola');
     if (!formData.companyAddress) errors.push('Endereço da Empresa');
+    if (!formData.companyNumber) errors.push('Número da Empresa');
     if (!formData.companyCity) errors.push('Cidade da Empresa');
     if (!formData.companyState) errors.push('Estado da Empresa');
     if (!formData.companyZip) errors.push('CEP da Empresa');
@@ -1409,7 +1412,8 @@ export default function FormularioPage() {
     // Section 9 - Ocupação Atual
     addField('9. OCUPAÇÃO ATUAL', 'Ocupação Atual', formData.jobTitle);
     addField('9. OCUPAÇÃO ATUAL', 'Nome da Empresa/Instituição', formData.companyName);
-    addField('9. OCUPAÇÃO ATUAL', 'Endereço da Empresa', formData.companyAddress);
+    const companyEnderecoCompleto = [formData.companyAddress, formData.companyNumber].filter(Boolean).join(', ');
+    addField('9. OCUPAÇÃO ATUAL', 'Endereço da Empresa', companyEnderecoCompleto);
     addField('9. OCUPAÇÃO ATUAL', 'Cidade da Empresa', formData.companyCity);
     addField('9. OCUPAÇÃO ATUAL', 'Estado da Empresa', formData.companyState);
     addField('9. OCUPAÇÃO ATUAL', 'CEP da Empresa', cleanCEP(formData.companyZip));
@@ -3413,8 +3417,18 @@ export default function FormularioPage() {
                 <Input
                   value={formData.companyAddress}
                   onChange={(e) => handleInputChange('companyAddress', e.target.value)}
-                  
+                 
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Número *</Label>
+                  <Input
+                    value={formData.companyNumber}
+                    onChange={(e) => handleInputChange('companyNumber', e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
