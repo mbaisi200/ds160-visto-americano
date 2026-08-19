@@ -1577,6 +1577,7 @@ export default function FormularioPage() {
                 <div><span className="font-medium text-gray-500">Data de Nascimento:</span><br />{fmt(formData.birthDate)}</div>
                 <div><span className="font-medium text-gray-500">Cidade/Estado de Nascimento:</span><br />{formData.birthCity || '-'}</div>
                 <div><span className="font-medium text-gray-500">País:</span><br />{formData.birthCountry || '-'}</div>
+                <div><span className="font-medium text-gray-500">Estado Civil:</span><br />{formData.maritalStatus || '-'}</div>
                 <div><span className="font-medium text-gray-500">CPF:</span><br />{formData.cpf || '-'}</div>
                 <div><span className="font-medium text-gray-500">RG:</span><br />{formData.rg || '-'}</div>
               </div>

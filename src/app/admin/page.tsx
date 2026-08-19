@@ -652,6 +652,7 @@ export default function AdminPage() {
     addField('1. INFORMAÇÕES PESSOAIS', 'Data de Nascimento', formatDateForTXT(get('birthDate')));
     addField('1. INFORMAÇÕES PESSOAIS', 'Cidade/Estado de Nascimento', get('birthCity'));
     addField('1. INFORMAÇÕES PESSOAIS', 'País de Nascimento', get('birthCountry'));
+    addField('1. INFORMAÇÕES PESSOAIS', 'Estado Civil', get('maritalStatus'));
     addField('1. INFORMAÇÕES PESSOAIS', 'CPF', cpfLimpo);
     addField('1. INFORMAÇÕES PESSOAIS', 'RG', get('rg'));
 
@@ -960,6 +961,7 @@ export default function AdminPage() {
       birthDate: { section: 0, label: 'Data de Nascimento' },
       birthCity: { section: 0, label: 'Cidade de Nascimento' },
       birthCountry: { section: 0, label: 'País de Nascimento' },
+      maritalStatus: { section: 0, label: 'Estado Civil' },
       cpf: { section: 0, label: 'CPF' },
       rg: { section: 0, label: 'RG' },
       address: { section: 1, label: 'Endereço' },
@@ -1638,7 +1640,7 @@ export default function AdminPage() {
             
             // Group fields into sections
             const sections = {
-              pessoal: ['lastName', 'firstName', 'usedOtherName', 'oldLastName', 'oldFirstName', 'birthDate', 'birthCity', 'birthCountry', 'cpf', 'rg'],
+              pessoal: ['lastName', 'firstName', 'usedOtherName', 'oldLastName', 'oldFirstName', 'birthDate', 'birthCity', 'birthCountry', 'maritalStatus', 'cpf', 'rg'],
               contato: ['address', 'addressNumber', 'addressComplement', 'neighborhood', 'city', 'contactState', 'zipCode', 'country', 'phone1', 'phone2', 'phoneProfessional', 'email', 'usedOtherPhones', 'otherPhones', 'usedOtherEmails', 'otherEmails'],
               correspondencia: ['sameAddress', 'corrStreet', 'corrNumber', 'corrComplement', 'corrNeighborhood', 'corrCity', 'corrState', 'corrZipCode', 'corrCountry'],
               sociais: ['hasSocialMedia', 'socialList'],
@@ -1655,7 +1657,7 @@ export default function AdminPage() {
             
             const fieldLabels: Record<string, string> = {
               lastName: 'Sobrenome', firstName: 'Nome', usedOtherName: 'Usou outro nome', oldLastName: 'Antigo sobrenome', oldFirstName: 'Antigo nome',
-              birthDate: 'Data de nascimento', birthCity: 'Cidade de nascimento', birthCountry: 'País de nascimento', cpf: 'CPF', rg: 'RG',
+              birthDate: 'Data de nascimento', birthCity: 'Cidade de nascimento', birthCountry: 'País de nascimento', maritalStatus: 'Estado Civil', cpf: 'CPF', rg: 'RG',
               address: 'Endereço', addressNumber: 'Número', addressComplement: 'Complemento', neighborhood: 'Bairro',
               city: 'Cidade', contactState: 'Estado', zipCode: 'CEP', country: 'País',
               phone1: 'Telefone principal', phone2: 'Telefone opcional', phoneProfessional: 'Telefone profissional', email: 'E-mail',
