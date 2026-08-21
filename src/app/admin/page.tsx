@@ -1033,7 +1033,7 @@ export default function AdminPage() {
       </head>
       <body>
         <div class="header">
-          <div class="logo">SB Viagens e Turismo</div>
+          <div class="logo">IHS Vistos</div>
           <div style="text-align: right; color: #666;">
             Gerado em: ${new Date().toLocaleDateString('pt-BR')}<br>
             Status: ${form.status?.toUpperCase()}
@@ -1064,7 +1064,7 @@ export default function AdminPage() {
 
     html += `
         <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; text-align: center; color: #888; font-size: 12px;">
-          Este documento foi gerado automaticamente pelo sistema DS160 - SB Viagens e Turismo<br>
+          Este documento foi gerado automaticamente pelo sistema DS160 - IHS Vistos<br>
           Não é um documento oficial do governo dos Estados Unidos
         </div>
       </body>
@@ -1210,9 +1210,7 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                <span className="text-[#623AA2] font-bold">SB</span>
-              </div>
+              <img src="/logo-ihsvistos.png" alt="IHS Vistos" className="w-10 h-10 rounded-full shadow-lg object-cover" />
               <div>
                 <h1 className="text-xl font-bold">Painel Administrativo</h1>
                 <p className="text-sm text-white/80">DS160 - Visto Americano</p>

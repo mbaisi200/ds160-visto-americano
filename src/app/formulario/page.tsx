@@ -1545,11 +1545,9 @@ export default function FormularioPage() {
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold">SB</span>
-                </div>
+                <img src="/logo-ihsvistos.png" alt="IHS Vistos" className="w-12 h-12 rounded-full shadow-lg object-cover" />
                 <div>
-                  <h1 className="text-xl font-bold text-[#623AA2]">SB Viagens e Turismo</h1>
+                   <h1 className="text-xl font-bold text-[#623AA2]">IHS Vistos</h1>
                   <p className="text-sm text-gray-500">Revise seus dados antes de enviar</p>
                 </div>
               </div>
@@ -1755,9 +1753,7 @@ export default function FormularioPage() {
         <div className="max-w-5xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm sm:text-base">IHS</span>
-              </div>
+              <img src="/logo-ihsvistos.png" alt="IHS Vistos" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full shadow-lg object-cover" />
               <div>
                 <h1 className="font-bold text-[#623AA2] text-sm sm:text-base">IHS Vistos - Formulário DS160</h1>
                 <p className="text-xs text-gray-500 hidden sm:block">Visto Americano</p>

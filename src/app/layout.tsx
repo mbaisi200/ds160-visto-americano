@@ -15,24 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DS160 - Formulário de Visto Americano | SB Viagens e Turismo",
-  description: "Sistema de preenchimento do formulário DS160 para visto americano. SB Viagens e Turismo - Especialistas em visto americano.",
-  keywords: ["DS160", "Visto Americano", "US Visa", "SB Viagens", "Turismo", "EUA"],
-  authors: [{ name: "SB Viagens e Turismo" }],
+  title: "DS160 - Formulário de Visto Americano | IHS Vistos",
+  description: "Sistema de preenchimento do formulário DS160 para visto americano. IHS Vistos - Especialistas em visto americano.",
+  keywords: ["DS160", "Visto Americano", "US Visa", "IHS Vistos", "Turismo", "EUA"],
+  authors: [{ name: "IHS Vistos" }],
   icons: {
-    icon: "https://sbturismoeviagens.com.br/wp-content/uploads/2024/08/cropped-sb-turismo-logo-192x192.png",
+    icon: "/logo-ihsvistos.png",
   },
   openGraph: {
     title: "DS160 - Formulário de Visto Americano",
-    description: "Preencha seu formulário DS160 com a SB Viagens e Turismo",
+    description: "Preencha seu formulário DS160 com a IHS Vistos",
     url: "https://vistoamericano.com.br",
-    siteName: "SB Viagens e Turismo",
+    siteName: "IHS Vistos",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "DS160 - Formulário de Visto Americano",
-    description: "Preencha seu formulário DS160 com a SB Viagens e Turismo",
+    description: "Preencha seu formulário DS160 com a IHS Vistos",
   },
 };
 

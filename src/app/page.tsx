@@ -62,11 +62,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-[#623AA2] font-bold text-sm sm:text-lg">SB</span>
-              </div>
+              <img src="/logo-ihsvistos.png" alt="IHS Vistos" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full shadow-lg object-cover" />
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-white">SB Viagens e Turismo</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-white">IHS Vistos</h1>
                 <p className="text-xs sm:text-sm text-white/70 hidden sm:block">Especialistas em visto americano</p>
               </div>
             </div>
@@ -278,13 +276,11 @@ export default function HomePage() {
       <footer className="bg-[#002776] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-              <span className="text-[#623AA2] font-bold text-sm">SB</span>
-            </div>
-            <span className="font-semibold">SB Viagens e Turismo</span>
+            <img src="/logo-ihsvistos.png" alt="IHS Vistos" className="w-8 h-8 rounded-full object-cover" />
+            <span className="font-semibold">IHS Vistos</span>
           </div>
           <p className="text-sm text-white/60">
-            © {new Date().getFullYear()} SB Viagens e Turismo. Todos os direitos reservados.
+            © {new Date().getFullYear()} IHS Vistos. Todos os direitos reservados.
           </p>
           <p className="text-xs text-white/40 mt-2">
             Este não é um site oficial do governo dos EUA. Somos uma assessoria especializada.

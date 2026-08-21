@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Admin master key for API access (set in .env)
-const ADMIN_API_KEY = process.env.ADMIN_API_KEY || 'sb-viagens-admin-2024';
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || 'ihs-vistos-admin-2024';
 
 // Simple auth check
 function validateApiKey(request: NextRequest): boolean {

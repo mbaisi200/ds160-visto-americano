@@ -95,9 +95,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794] p-4">
       <Card className="w-full max-w-md mx-2 sm:mx-0">
         <CardHeader className="text-center px-4 sm:px-6 pt-4 sm:pt-6">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-            <span className="text-white font-bold text-lg sm:text-xl">SB</span>
-          </div>
+          <img src="/logo-ihsvistos.png" alt="IHS Vistos" className="w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-lg object-cover mx-auto mb-3 sm:mb-4" />
           <CardTitle className="text-xl sm:text-2xl font-bold text-[#623AA2]">Acessar Sistema</CardTitle>
           <CardDescription className="text-sm">
             Digite seu CPF e senha para acessar o formulário DS160

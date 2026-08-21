@@ -73,9 +73,7 @@ export default function CadastroPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#623AA2] via-[#8b5cb6] to-[#F97794] p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#623AA2] to-[#F97794] rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-xl">SB</span>
-          </div>
+          <img src="/logo-ihsvistos.png" alt="IHS Vistos" className="w-16 h-16 rounded-full shadow-lg object-cover mx-auto mb-4" />
           <CardTitle className="text-2xl font-bold text-[#623AA2]">Criar Conta</CardTitle>
           <CardDescription>
             Cadastre-se para preencher o formulário DS160

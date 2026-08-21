@@ -7,7 +7,7 @@ export async function GET() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Configuração Firebase Admin - SB Viagens</title>
+  <title>Configuração Firebase Admin - IHS Vistos</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -140,14 +140,14 @@ export async function GET() {
 
 FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"vistoamericano-58f87","private_key_id":"...","private_key":"-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n","client_email":"firebase-adminsdk-xxxxx@vistoamericano-58f87.iam.gserviceaccount.com","client_id":"...","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-xxxxx%40vistoamericano-58f87.iam.gserviceaccount.com"}
 
-ADMIN_API_KEY=sb-viagens-admin-2024</pre>
+ADMIN_API_KEY=ihs-vistos-admin-2024</pre>
 
     <h2>📡 Usando a API</h2>
 
     <div class="info-box">
       <strong>Resetar senha do Admin:</strong>
       <pre>curl -X POST https://seu-site.com/api \\
-  -H "Authorization: Bearer sb-viagens-admin-2024" \\
+  -H "Authorization: Bearer ihs-vistos-admin-2024" \\
   -H "Content-Type: application/json" \\
   -d '{"action":"create-admin","password":"nova-senha"}'</pre>
     </div>
@@ -155,7 +155,7 @@ ADMIN_API_KEY=sb-viagens-admin-2024</pre>
     <div class="info-box">
       <strong>Resetar senha de um usuário:</strong>
       <pre>curl -X POST https://seu-site.com/api \\
-  -H "Authorization: Bearer sb-viagens-admin-2024" \\
+  -H "Authorization: Bearer ihs-vistos-admin-2024" \\
   -H "Content-Type: application/json" \\
   -d '{"action":"reset-password","email":"12345678901@ds160.local","newPassword":"nova-senha"}'</pre>
     </div>
@@ -163,7 +163,7 @@ ADMIN_API_KEY=sb-viagens-admin-2024</pre>
     <div class="info-box">
       <strong>Listar todos os usuários:</strong>
       <pre>curl https://seu-site.com/api \\
-  -H "Authorization: Bearer sb-viagens-admin-2024"</pre>
+  -H "Authorization: Bearer ihs-vistos-admin-2024"</pre>
     </div>
 
     <div class="success">
