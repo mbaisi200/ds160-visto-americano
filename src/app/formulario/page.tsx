@@ -51,7 +51,7 @@ import {
   Plus,
   Trash2
 } from 'lucide-react';
-import { removeAccents, formatDateToBrazilian, formatDateForTXT, cleanPhone, cleanCEP, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF, getBrazilDateTimeString, maskCEP } from '@/lib/masks';
+import { removeAccents, formatDateToBrazilian, formatDateForTXT, cleanPhone, cleanCEP, APPLICATION_LOCATIONS, SOCIAL_PLATFORMS, maskCPF, getBrazilDateTimeString, maskCEP, maskPhone } from '@/lib/masks';
 import { toast } from 'sonner';
 
 interface PrevJob {
@@ -612,15 +612,13 @@ export default function FormularioPage() {
     }));
   };
 
-  // Formata valor monetário brasileiro (R$)
+  // Formata valor monetário brasileiro (R$) - digitação da esquerda para direita com 2 casas decimais
   const maskCurrencyBR = (value: string): string => {
     const digits = value.replace(/\D/g, '');
     if (!digits) return '';
-    if (digits.length <= 2) {
-      return `0,${digits.padStart(2, '0')}`;
-    }
-    const integer = digits.slice(0, -2);
-    const decimal = digits.slice(-2);
+    const padded = digits.padStart(3, '0');
+    const integer = padded.slice(0, -2).replace(/^0+/, '') || '0';
+    const decimal = padded.slice(-2);
     const formattedInt = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return `${formattedInt},${decimal}`;
   };
@@ -630,6 +628,35 @@ export default function FormularioPage() {
     setFormData(prev => ({
       ...prev,
       [field]: masked
+    }));
+  };
+
+  // Handler para campos numéricos - aceita apenas dígitos
+  const handleNumericChange = (field: keyof FormData, value: string) => {
+    const digits = value.replace(/\D/g, '');
+    setFormData(prev => ({
+      ...prev,
+      [field]: digits
+    }));
+  };
+
+  // Handler para campos de telefone - aplica máscara brasileira
+  const handlePhoneChange = (field: keyof FormData, value: string) => {
+    const masked = maskPhone(value);
+    setFormData(prev => ({
+      ...prev,
+      [field]: masked
+    }));
+  };
+
+  // Handler para telefone em ocupações anteriores
+  const handlePrevJobPhoneChange = (index: number, value: string) => {
+    const masked = maskPhone(value);
+    setFormData(prev => ({
+      ...prev,
+      prevJobsList: prev.prevJobsList.map((item, i) =>
+        i === index ? { ...item, companyPhone: masked } : item
+      )
     }));
   };
 
@@ -797,6 +824,7 @@ export default function FormularioPage() {
     if (!formData.companyCity) errors.push('Cidade da Empresa');
     if (!formData.companyState) errors.push('Estado da Empresa');
     if (!formData.companyZip) errors.push('CEP da Empresa');
+    if (!formData.companyPhone) errors.push('Telefone da Empresa');
     if (!formData.companyStartDate) errors.push('Data de início');
     // Remuneração não é obrigatória se for estudante
     if (formData.jobTitle && formData.jobTitle.toUpperCase().includes('ESTUDANTE') === false && !formData.companySalary) errors.push('Remuneração');
@@ -827,7 +855,17 @@ export default function FormularioPage() {
 
     // Seção 11 - Universitário
     if (!formData.hasUniversity) errors.push('Frequentou escola ou universidade?');
-    if (formData.hasUniversity === 'SIM' && !formData.universityNumber) errors.push('Número (Universitário)');
+    if (formData.hasUniversity === 'SIM') {
+      if (!formData.universityName) errors.push('Nome da instituição (Universitário)');
+      if (!formData.universityCourse) errors.push('Curso (Universitário)');
+      if (!formData.universityZip) errors.push('CEP (Universitário)');
+      if (!formData.universityCity) errors.push('Cidade (Universitário)');
+      if (!formData.universityState) errors.push('Estado (Universitário)');
+      if (!formData.universityAddress) errors.push('Endereço (Universitário)');
+      if (!formData.universityNumber) errors.push('Número (Universitário)');
+      if (!formData.universityStartDate) errors.push('Data de início (Universitário)');
+      if (!formData.universityEndDate) errors.push('Data de conclusão (Universitário)');
+    }
 
     return errors;
   };
@@ -2013,8 +2051,8 @@ export default function FormularioPage() {
                   <Label>Número *</Label>
                   <Input
                     value={formData.addressNumber}
-                    onChange={(e) => handleInputChange('addressNumber', e.target.value)}
-                    
+                    onChange={(e) => handleNumericChange('addressNumber', e.target.value)}
+                    inputMode="numeric"
                   />
                 </div>
                 <div className="md:col-span-2 space-y-2">
@@ -2059,15 +2097,18 @@ export default function FormularioPage() {
                   <Label>Telefone Principal *</Label>
                   <Input
                     value={formData.phone1}
-                    onChange={(e) => handleInputChange('phone1', e.target.value)}
-                   
+                    onChange={(e) => handlePhoneChange('phone1', e.target.value)}
+                    placeholder="(00) 00000-0000"
+                    maxLength={16}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Telefone Opcional</Label>
                   <Input
                     value={formData.phone2}
-                    onChange={(e) => handleInputChange('phone2', e.target.value)}
+                    onChange={(e) => handlePhoneChange('phone2', e.target.value)}
+                    placeholder="(00) 00000-0000"
+                    maxLength={16}
                   />
                 </div>
               </div>
@@ -2077,7 +2118,9 @@ export default function FormularioPage() {
                   <Label>Telefone Profissional</Label>
                   <Input
                     value={formData.phoneProfessional}
-                    onChange={(e) => handleInputChange('phoneProfessional', e.target.value)}
+                    onChange={(e) => handlePhoneChange('phoneProfessional', e.target.value)}
+                    placeholder="(00) 00000-0000"
+                    maxLength={16}
                   />
                 </div>
                 <div className="space-y-2">
@@ -2139,7 +2182,7 @@ export default function FormularioPage() {
                   <Label>E-mails anteriores</Label>
                   <Textarea
                     value={formData.otherEmails}
-                    onChange={(e) => handleInputChange('otherEmails', e.target.value)}
+                    onChange={(e) => handleEmailChange('otherEmails', e.target.value)}
                     placeholder="Ex: email1@exemplo.com, email2@exemplo.com"
                   />
                 </div>
@@ -2188,7 +2231,8 @@ export default function FormularioPage() {
                         <Label>Número *</Label>
                         <Input
                           value={formData.corrNumber}
-                          onChange={(e) => handleInputChange('corrNumber', e.target.value)}
+                          onChange={(e) => handleNumericChange('corrNumber', e.target.value)}
+                          inputMode="numeric"
                         />
                       </div>
                       <div className="space-y-2">
@@ -2220,7 +2264,9 @@ export default function FormularioPage() {
                       <Label>CEP *</Label>
                       <Input
                         value={formData.corrZipCode}
-                        onChange={(e) => handleInputChange('corrZipCode', e.target.value)}
+                        onChange={(e) => handleCEPChange('corrZipCode', e.target.value)}
+                        placeholder="00000-000"
+                        maxLength={9}
                       />
                     </div>
                   </div>
@@ -2321,8 +2367,9 @@ export default function FormularioPage() {
                   <Label>Número *</Label>
                   <Input
                     value={formData.passportNumber}
-                    onChange={(e) => handleInputChange('passportNumber', e.target.value)}
-                   
+                    onChange={(e) => handleNumericChange('passportNumber', e.target.value)}
+                    inputMode="numeric"
+                    maxLength={9}
                   />
                 </div>
               </div>
@@ -2506,7 +2553,9 @@ export default function FormularioPage() {
                       <Label>Telefone *</Label>
                       <Input
                         value={formData.sponsorPhone}
-                        onChange={(e) => handleInputChange('sponsorPhone', e.target.value)}
+                        onChange={(e) => handlePhoneChange('sponsorPhone', e.target.value)}
+                        placeholder="(00) 00000-0000"
+                        maxLength={16}
                       />
                     </div>
                   </div>
@@ -2597,7 +2646,8 @@ export default function FormularioPage() {
                           <Label>Número</Label>
                           <Input
                             value={formData.usNumber}
-                            onChange={(e) => handleInputChange('usNumber', e.target.value)}
+                            onChange={(e) => handleNumericChange('usNumber', e.target.value)}
+                            inputMode="numeric"
                           />
                         </div>
                         <div className="space-y-2">
@@ -2784,7 +2834,9 @@ export default function FormularioPage() {
                       <Label>Número do Visto</Label>
                       <Input
                         value={formData.visaNumber}
-                        onChange={(e) => handleInputChange('visaNumber', e.target.value)}
+                        onChange={(e) => handleNumericChange('visaNumber', e.target.value)}
+                        inputMode="numeric"
+                        maxLength={12}
                       />
                     </div>
                   </div>
@@ -2936,8 +2988,10 @@ export default function FormularioPage() {
                         <Label>Telefone nos EUA *</Label>
                         <Input
                           value={formData.fatherUSAPhone}
-                          onChange={(e) => handleInputChange('fatherUSAPhone', e.target.value)}
-                          placeholder="+1 (XXX) XXX-XXXX"
+                          onChange={(e) => handleNumericChange('fatherUSAPhone', e.target.value)}
+                          placeholder="10 dígitos"
+                          maxLength={11}
+                          inputMode="numeric"
                         />
                       </div>
                       <div className="space-y-2">
@@ -3021,8 +3075,10 @@ export default function FormularioPage() {
                         <Label>Telefone nos EUA *</Label>
                         <Input
                           value={formData.motherUSAPhone}
-                          onChange={(e) => handleInputChange('motherUSAPhone', e.target.value)}
-                          placeholder="+1 (XXX) XXX-XXXX"
+                          onChange={(e) => handleNumericChange('motherUSAPhone', e.target.value)}
+                          placeholder="10 dígitos"
+                          maxLength={11}
+                          inputMode="numeric"
                         />
                       </div>
                       <div className="space-y-2">
@@ -3089,7 +3145,9 @@ export default function FormularioPage() {
                         <Label>Telefone</Label>
                         <Input
                           value={formData.relativePhone}
-                          onChange={(e) => handleInputChange('relativePhone', e.target.value)}
+                          onChange={(e) => handlePhoneChange('relativePhone', e.target.value)}
+                          placeholder="(00) 00000-0000"
+                          maxLength={16}
                         />
                       </div>
                     </div>
@@ -3214,7 +3272,8 @@ export default function FormularioPage() {
                             <Label>Número</Label>
                             <Input
                               value={formData.spouseNumber}
-                              onChange={(e) => handleInputChange('spouseNumber', e.target.value)}
+                              onChange={(e) => handleNumericChange('spouseNumber', e.target.value)}
+                              inputMode="numeric"
                             />
                           </div>
                           <div className="space-y-2">
@@ -3423,18 +3482,20 @@ export default function FormularioPage() {
                   <Label>Número *</Label>
                   <Input
                     value={formData.companyNumber}
-                    onChange={(e) => handleInputChange('companyNumber', e.target.value)}
+                    onChange={(e) => handleNumericChange('companyNumber', e.target.value)}
+                    inputMode="numeric"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Telefone</Label>
+                  <Label>Telefone *</Label>
                   <Input
                     value={formData.companyPhone}
-                    onChange={(e) => handleInputChange('companyPhone', e.target.value)}
+                    onChange={(e) => handlePhoneChange('companyPhone', e.target.value)}
                     placeholder="(00) 00000-0000"
+                    maxLength={16}
                   />
                 </div>
                 <div className="space-y-2">
@@ -3599,8 +3660,9 @@ export default function FormularioPage() {
                           <Label>Telefone</Label>
                           <Input
                             value={job.companyPhone}
-                            onChange={(e) => updatePrevJob(index, 'companyPhone', e.target.value)}
+                            onChange={(e) => handlePrevJobPhoneChange(index, e.target.value)}
                             placeholder="(00) 00000-0000"
+                            maxLength={16}
                           />
                         </div>
                         <div className="space-y-2">
@@ -3684,14 +3746,14 @@ export default function FormularioPage() {
                   <h4 className="font-medium text-gray-700">Escola/Universidade 1</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Nome da instituição</Label>
+                      <Label>Nome da instituição *</Label>
                       <Input
                         value={formData.universityName}
                         onChange={(e) => handleInputChange('universityName', e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Curso</Label>
+                      <Label>Curso *</Label>
                       <Input
                         value={formData.universityCourse}
                         onChange={(e) => handleInputChange('universityCourse', e.target.value)}
@@ -3701,7 +3763,7 @@ export default function FormularioPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>CEP</Label>
+                      <Label>CEP *</Label>
                       <Input
                         value={formData.universityZip}
                         onChange={(e) => handleUniversityCEPChange(e.target.value)}
@@ -3709,14 +3771,14 @@ export default function FormularioPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Cidade</Label>
+                      <Label>Cidade *</Label>
                       <Input
                         value={formData.universityCity}
                         onChange={(e) => handleInputChange('universityCity', e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Estado</Label>
+                      <Label>Estado *</Label>
                       <Input
                         value={formData.universityState}
                         onChange={(e) => handleInputChange('universityState', e.target.value)}
@@ -3725,7 +3787,7 @@ export default function FormularioPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Endereço</Label>
+                    <Label>Endereço *</Label>
                     <Input
                       value={formData.universityAddress}
                       onChange={(e) => handleInputChange('universityAddress', e.target.value)}
@@ -3737,14 +3799,15 @@ export default function FormularioPage() {
                       <Label>Número *</Label>
                       <Input
                         value={formData.universityNumber}
-                        onChange={(e) => handleInputChange('universityNumber', e.target.value)}
+                        onChange={(e) => handleNumericChange('universityNumber', e.target.value)}
+                        inputMode="numeric"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Data de Início</Label>
+                      <Label>Data de Início *</Label>
                       <Input
                         type="date"
                         value={formData.universityStartDate}
@@ -3752,7 +3815,7 @@ export default function FormularioPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Data de Conclusão</Label>
+                      <Label>Data de Conclusão *</Label>
                       <Input
                         type="date"
                         value={formData.universityEndDate}
@@ -3777,14 +3840,14 @@ export default function FormularioPage() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Nome da instituição</Label>
+                          <Label>Nome da instituição *</Label>
                           <Input
                             value={school.name}
                             onChange={(e) => updateSchool(index, 'name', e.target.value)}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Curso</Label>
+                          <Label>Curso *</Label>
                           <Input
                             value={school.course}
                             onChange={(e) => updateSchool(index, 'course', e.target.value)}
@@ -3794,7 +3857,7 @@ export default function FormularioPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                          <Label>CEP</Label>
+                          <Label>CEP *</Label>
                           <Input
                             value={school.zip}
                             onChange={(e) => handleSchoolCEPChange(index, e.target.value)}
@@ -3802,14 +3865,14 @@ export default function FormularioPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Cidade</Label>
+                          <Label>Cidade *</Label>
                           <Input
                             value={school.city}
                             onChange={(e) => updateSchool(index, 'city', e.target.value)}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Estado</Label>
+                          <Label>Estado *</Label>
                           <Input
                             value={school.state}
                             onChange={(e) => updateSchool(index, 'state', e.target.value)}
@@ -3818,7 +3881,7 @@ export default function FormularioPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Endereço</Label>
+                        <Label>Endereço *</Label>
                         <Input
                           value={school.address}
                           onChange={(e) => updateSchool(index, 'address', e.target.value)}
@@ -3827,7 +3890,7 @@ export default function FormularioPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Data de Início</Label>
+                          <Label>Data de Início *</Label>
                           <Input
                             type="date"
                             value={school.startDate}
@@ -3835,7 +3898,7 @@ export default function FormularioPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Data de Conclusão</Label>
+                          <Label>Data de Conclusão *</Label>
                           <Input
                             type="date"
                             value={school.endDate}
@@ -3940,7 +4003,9 @@ export default function FormularioPage() {
                       <Label>Número do I-20</Label>
                       <Input
                         value={formData.i20Number}
-                        onChange={(e) => handleInputChange('i20Number', e.target.value)}
+                        onChange={(e) => handleNumericChange('i20Number', e.target.value)}
+                        inputMode="numeric"
+                        maxLength={10}
                       />
                     </div>
                     <div className="space-y-2">
@@ -3974,7 +4039,9 @@ export default function FormularioPage() {
                       <Label>Telefone da Escola</Label>
                       <Input
                         value={formData.i20SchoolPhone}
-                        onChange={(e) => handleInputChange('i20SchoolPhone', e.target.value)}
+                        onChange={(e) => handlePhoneChange('i20SchoolPhone', e.target.value)}
+                        placeholder="(00) 00000-0000"
+                        maxLength={16}
                       />
                     </div>
                     <div className="space-y-2">
