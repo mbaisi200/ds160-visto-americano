@@ -855,6 +855,7 @@ export default function AdminPage() {
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Ocupação`, job.jobTitle || '');
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Nome da Empresa`, job.companyName || '');
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Endereço da Empresa`, job.companyAddress || '');
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Número da Empresa`, job.companyNumber || '');
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Bairro da Empresa`, job.companyNeighborhood || '');
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Cidade da Empresa`, job.companyCity || '');
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Estado da Empresa`, job.companyState || '');

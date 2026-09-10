@@ -58,6 +58,7 @@ interface PrevJob {
   jobTitle: string;
   companyName: string;
   companyAddress: string;
+  companyNumber: string;
   companyNeighborhood: string;
   companyCity: string;
   companyState: string;
@@ -449,6 +450,7 @@ export default function FormularioPage() {
   const [success, setSuccess] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [errorsBySection, setErrorsBySection] = useState<SectionErrors[]>([]);
   const [showReview, setShowReview] = useState(false);
   const [loadingForm, setLoadingForm] = useState(true);
   const [existingFormId, setExistingFormId] = useState<string | null>(null);
@@ -842,6 +844,7 @@ export default function FormularioPage() {
           if (!job.jobTitle) errors.push(`Ocupação anterior ${index + 1}: Ocupação`);
           if (!job.companyName) errors.push(`Ocupação anterior ${index + 1}: Nome da Empresa`);
           if (!job.companyAddress) errors.push(`Ocupação anterior ${index + 1}: Endereço`);
+          if (!job.companyNumber) errors.push(`Ocupação anterior ${index + 1}: Número`);
           if (!job.companyCity) errors.push(`Ocupação anterior ${index + 1}: Cidade`);
           if (!job.companyState) errors.push(`Ocupação anterior ${index + 1}: Estado`);
           if (!job.companyZip) errors.push(`Ocupação anterior ${index + 1}: CEP`);
@@ -870,6 +873,133 @@ export default function FormularioPage() {
     return errors;
   };
 
+  interface SectionErrors {
+    sectionId: string;
+    sectionName: string;
+    fields: string[];
+  }
+
+  const SECTION_ERROR_MAP: Record<string, { id: string; name: string }> = {
+    'Local de Solicitação': { id: 'section-0', name: '0. Local de Solicitação' },
+    'Sobrenome': { id: 'section-1', name: '1. Informações Pessoais' },
+    'Nome': { id: 'section-1', name: '1. Informações Pessoais' },
+    'Data de Nascimento': { id: 'section-1', name: '1. Informações Pessoais' },
+    'Cidade/Estado de Nascimento': { id: 'section-1', name: '1. Informações Pessoais' },
+    'Estado Civil': { id: 'section-1', name: '1. Informações Pessoais' },
+    'Endereço': { id: 'section-2', name: '2. Informações de Contato' },
+    'Número do endereço': { id: 'section-2', name: '2. Informações de Contato' },
+    'Bairro': { id: 'section-2', name: '2. Informações de Contato' },
+    'Cidade': { id: 'section-2', name: '2. Informações de Contato' },
+    'Estado': { id: 'section-2', name: '2. Informações de Contato' },
+    'CEP': { id: 'section-2', name: '2. Informações de Contato' },
+    'Telefone Principal': { id: 'section-2', name: '2. Informações de Contato' },
+    'E-mail': { id: 'section-2', name: '2. Informações de Contato' },
+    'Endereço de correspondência é o mesmo?': { id: 'section-3', name: '3. Endereço de Correspondência' },
+    'Rua (End. Correspondência)': { id: 'section-3', name: '3. Endereço de Correspondência' },
+    'Número (End. Correspondência)': { id: 'section-3', name: '3. Endereço de Correspondência' },
+    'Cidade (End. Correspondência)': { id: 'section-3', name: '3. Endereço de Correspondência' },
+    'Estado (End. Correspondência)': { id: 'section-3', name: '3. Endereço de Correspondência' },
+    'CEP (End. Correspondência)': { id: 'section-3', name: '3. Endereço de Correspondência' },
+    'Possui redes sociais?': { id: 'section-4', name: '4. Redes Sociais' },
+    'Adicione pelo menos uma rede social': { id: 'section-4', name: '4. Redes Sociais' },
+    'Série do Passaporte': { id: 'section-5', name: '5. Passaporte' },
+    'Número do Passaporte': { id: 'section-5', name: '5. Passaporte' },
+    'Data de Emissão do Passaporte': { id: 'section-5', name: '5. Passaporte' },
+    'Data de Expiração do Passaporte': { id: 'section-5', name: '5. Passaporte' },
+    'Cidade de Emissão do Passaporte': { id: 'section-5', name: '5. Passaporte' },
+    'Estado de Emissão do Passaporte': { id: 'section-5', name: '5. Passaporte' },
+    'Motivo da viagem': { id: 'section-6', name: '6. Viagem' },
+    'Possui planos específicos?': { id: 'section-6', name: '6. Viagem' },
+    'Sabe a data de chegada?': { id: 'section-6', name: '6. Viagem' },
+    'Data de chegada pretendida': { id: 'section-6', name: '6. Viagem' },
+    'Sabe o endereço nos EUA?': { id: 'section-6', name: '6. Viagem' },
+    'Nome do Patrocinador': { id: 'section-6', name: '6. Viagem' },
+    'Telefone do Patrocinador': { id: 'section-6', name: '6. Viagem' },
+    'E-mail do Patrocinador': { id: 'section-6', name: '6. Viagem' },
+    'Relação com o Patrocinador': { id: 'section-6', name: '6. Viagem' },
+    'Cidade do Patrocinador': { id: 'section-6', name: '6. Viagem' },
+    'Estado do Patrocinador': { id: 'section-6', name: '6. Viagem' },
+    'CEP do Patrocinador': { id: 'section-6', name: '6. Viagem' },
+    'País do Patrocinador': { id: 'section-6', name: '6. Viagem' },
+    'Existem pessoas que irão viajar com você?': { id: 'section-6', name: '6. Viagem' },
+    'É grupo ou organização?': { id: 'section-6', name: '6. Viagem' },
+    'Já teve visto para os EUA?': { id: 'section-7', name: '7. Vistos Anteriores' },
+    'Sobrenome do pai': { id: 'section-8', name: '8. Informações Familiares' },
+    'Nome do pai': { id: 'section-8', name: '8. Informações Familiares' },
+    'Data de nascimento do pai': { id: 'section-8', name: '8. Informações Familiares' },
+    'Pai está nos EUA?': { id: 'section-8', name: '8. Informações Familiares' },
+    'Endereço do pai nos EUA': { id: 'section-8', name: '8. Informações Familiares' },
+    'Zip Code do pai': { id: 'section-8', name: '8. Informações Familiares' },
+    'Telefone do pai nos EUA': { id: 'section-8', name: '8. Informações Familiares' },
+    'E-mail do pai': { id: 'section-8', name: '8. Informações Familiares' },
+    'Sobrenome da mãe': { id: 'section-8', name: '8. Informações Familiares' },
+    'Nome da mãe': { id: 'section-8', name: '8. Informações Familiares' },
+    'Data de nascimento da mãe': { id: 'section-8', name: '8. Informações Familiares' },
+    'Mãe está nos EUA?': { id: 'section-8', name: '8. Informações Familiares' },
+    'Endereço da mãe nos EUA': { id: 'section-8', name: '8. Informações Familiares' },
+    'Zip Code da mãe': { id: 'section-8', name: '8. Informações Familiares' },
+    'Telefone da mãe nos EUA': { id: 'section-8', name: '8. Informações Familiares' },
+    'E-mail da mãe': { id: 'section-8', name: '8. Informações Familiares' },
+    'Possui parentes nos EUA?': { id: 'section-8', name: '8. Informações Familiares' },
+    'Nome do parente': { id: 'section-8', name: '8. Informações Familiares' },
+    'Relação com o parente': { id: 'section-8', name: '8. Informações Familiares' },
+    'E-mail do parente': { id: 'section-8', name: '8. Informações Familiares' },
+    'É casado(a) atualmente?': { id: 'section-8', name: '8. Informações Familiares' },
+    'Já foi casado(a)?': { id: 'section-8', name: '8. Informações Familiares' },
+    'Nome do ex-cônjuge': { id: 'section-8', name: '8. Informações Familiares' },
+    'Data de nascimento do ex-cônjuge': { id: 'section-8', name: '8. Informações Familiares' },
+    'Cidade de nascimento do ex-cônjuge': { id: 'section-8', name: '8. Informações Familiares' },
+    'Estado de nascimento do ex-cônjuge': { id: 'section-8', name: '8. Informações Familiares' },
+    'Data do casamento': { id: 'section-8', name: '8. Informações Familiares' },
+    'Data do divórcio': { id: 'section-8', name: '8. Informações Familiares' },
+    'País do divórcio': { id: 'section-8', name: '8. Informações Familiares' },
+    'Motivo do divórcio': { id: 'section-8', name: '8. Informações Familiares' },
+    'Ocupação': { id: 'section-9', name: '9. Ocupação Atual' },
+    'Nome da Empresa/Escola': { id: 'section-9', name: '9. Ocupação Atual' },
+    'Endereço da Empresa': { id: 'section-9', name: '9. Ocupação Atual' },
+    'Número da Empresa': { id: 'section-9', name: '9. Ocupação Atual' },
+    'Cidade da Empresa': { id: 'section-9', name: '9. Ocupação Atual' },
+    'Estado da Empresa': { id: 'section-9', name: '9. Ocupação Atual' },
+    'CEP da Empresa': { id: 'section-9', name: '9. Ocupação Atual' },
+    'Telefone da Empresa': { id: 'section-9', name: '9. Ocupação Atual' },
+    'Data de início': { id: 'section-9', name: '9. Ocupação Atual' },
+    'Remuneração': { id: 'section-9', name: '9. Ocupação Atual' },
+    'Descrição das funções': { id: 'section-9', name: '9. Ocupação Atual' },
+    'Teve ocupação anterior?': { id: 'section-10', name: '10. Ocupação Anterior' },
+    'Adicione pelo menos uma ocupação anterior': { id: 'section-10', name: '10. Ocupação Anterior' },
+    'Frequentou escola ou universidade?': { id: 'section-11', name: '11. Escola/Universidade' },
+    'Nome da instituição (Universitário)': { id: 'section-11', name: '11. Escola/Universidade' },
+    'Curso (Universitário)': { id: 'section-11', name: '11. Escola/Universidade' },
+    'CEP (Universitário)': { id: 'section-11', name: '11. Escola/Universidade' },
+    'Cidade (Universitário)': { id: 'section-11', name: '11. Escola/Universidade' },
+    'Estado (Universitário)': { id: 'section-11', name: '11. Escola/Universidade' },
+    'Endereço (Universitário)': { id: 'section-11', name: '11. Escola/Universidade' },
+    'Número (Universitário)': { id: 'section-11', name: '11. Escola/Universidade' },
+    'Data de início (Universitário)': { id: 'section-11', name: '11. Escola/Universidade' },
+    'Data de conclusão (Universitário)': { id: 'section-11', name: '11. Escola/Universidade' },
+  };
+
+  // Mapeia erros dinâmicos (ex: "Rede social 1: Plataforma", "Ocupação anterior 2: Ocupação")
+  const getSectionForDynamicError = (error: string): { id: string; name: string } => {
+    if (error.startsWith('Rede social')) return { id: 'section-4', name: '4. Redes Sociais' };
+    if (error.startsWith('Ocupação anterior')) return { id: 'section-10', name: '10. Ocupação Anterior' };
+    return { id: 'section-0', name: '0. Local de Solicitação' };
+  };
+
+  const getErrorsBySection = (errors: string[]): SectionErrors[] => {
+    const map = new Map<string, SectionErrors>();
+
+    for (const error of errors) {
+      const section = SECTION_ERROR_MAP[error] || getSectionForDynamicError(error);
+      if (!map.has(section.id)) {
+        map.set(section.id, { sectionId: section.id, sectionName: section.name, fields: [] });
+      }
+      map.get(section.id)!.fields.push(error);
+    }
+
+    return Array.from(map.values());
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -877,7 +1007,9 @@ export default function FormularioPage() {
     const errors = validateRequiredFields();
     if (errors.length > 0) {
       setValidationErrors(errors);
-      toast.error(`Preencha os campos obrigatórios: ${errors.slice(0, 5).join(', ')}${errors.length > 5 ? ` e mais ${errors.length - 5} campos` : ''}`, {
+      setErrorsBySection(getErrorsBySection(errors));
+      const totalFields = errors.length;
+      toast.error(`Preencha os campos obrigatórios: ${totalFields} ${totalFields === 1 ? 'campo obrigatório' : 'campos obrigatórios'} pendente(s)`, {
         duration: 8000,
       });
       // Rolar para o topo do formulário para mostrar os erros
@@ -886,6 +1018,7 @@ export default function FormularioPage() {
     }
 
     setValidationErrors([]);
+    setErrorsBySection([]);
     setShowReview(true);
   };
 
@@ -998,6 +1131,7 @@ export default function FormularioPage() {
     jobTitle: '',
     companyName: '',
     companyAddress: '',
+    companyNumber: '',
     companyNeighborhood: '',
     companyCity: '',
     companyState: '',
@@ -1470,6 +1604,7 @@ export default function FormularioPage() {
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Ocupação`, job.jobTitle);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Nome da Empresa`, job.companyName);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Endereço da Empresa`, job.companyAddress);
+        addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Número da Empresa`, job.companyNumber);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Bairro da Empresa`, job.companyNeighborhood);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Cidade da Empresa`, job.companyCity);
         addField('10. OCUPAÇÃO ANTERIOR', `${prefix}Estado da Empresa`, job.companyState);
@@ -1854,18 +1989,36 @@ export default function FormularioPage() {
             <Alert className="border-red-300 bg-red-50">
               <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
               <AlertDescription className="text-red-800">
-                <strong>Formulário incompleto ({validationErrors.length} {validationErrors.length === 1 ? 'campo pendente' : 'campos pendentes'}):</strong>
-                <ul className="mt-2 list-disc list-inside space-y-1">
-                  {validationErrors.map((error, index) => (
-                    <li key={index} className="text-sm">{error}</li>
+                <strong>Formulário incompleto — {validationErrors.length} {validationErrors.length === 1 ? 'campo obrigatório' : 'campos obrigatórios'} pendente(s) em {errorsBySection.length} {errorsBySection.length === 1 ? 'seção' : 'seções'}:</strong>
+                <div className="mt-2 space-y-2">
+                  {errorsBySection.map((section) => (
+                    <div key={section.sectionId}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById(section.sectionId);
+                          if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }
+                        }}
+                        className="text-sm font-semibold text-red-700 hover:text-red-900 underline cursor-pointer bg-transparent border-none p-0"
+                      >
+                        {section.sectionName} ({section.fields.length} {section.fields.length === 1 ? 'campo' : 'campos'})
+                      </button>
+                      <ul className="ml-4 list-disc list-inside space-y-0.5">
+                        {section.fields.map((field, i) => (
+                          <li key={i} className="text-sm text-red-600">{field}</li>
+                        ))}
+                      </ul>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </AlertDescription>
             </Alert>
           )}
 
           {/* Section 0 - Application Location */}
-          <Card>
+          <Card id="section-0" className={errorsBySection.some(s => s.sectionId === 'section-0') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <MapPin className="h-5 w-5" />
@@ -1893,7 +2046,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 1 - Personal Info */}
-          <Card>
+          <Card id="section-1" className={errorsBySection.some(s => s.sectionId === 'section-1') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <User className="h-5 w-5" />
@@ -2019,7 +2172,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 2 - Contact Info */}
-          <Card>
+          <Card id="section-2" className={errorsBySection.some(s => s.sectionId === 'section-2') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Phone className="h-5 w-5" />
@@ -2191,7 +2344,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 3 - Correspondence Address */}
-          <Card>
+          <Card id="section-3" className={errorsBySection.some(s => s.sectionId === 'section-3') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <MapPin className="h-5 w-5" />
@@ -2276,7 +2429,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 4 - Social Media */}
-          <Card>
+          <Card id="section-4" className={errorsBySection.some(s => s.sectionId === 'section-4') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Globe className="h-5 w-5" />
@@ -2345,7 +2498,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 5 - Passport */}
-          <Card>
+          <Card id="section-5" className={errorsBySection.some(s => s.sectionId === 'section-5') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <CreditCard className="h-5 w-5" />
@@ -2420,7 +2573,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 6 - Travel */}
-          <Card>
+          <Card id="section-6" className={errorsBySection.some(s => s.sectionId === 'section-6') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Plane className="h-5 w-5" />
@@ -2786,7 +2939,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 7 - Previous Visas */}
-          <Card>
+          <Card id="section-7" className={errorsBySection.some(s => s.sectionId === 'section-7') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <FileText className="h-5 w-5" />
@@ -2912,7 +3065,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 8 - Family Info */}
-          <Card>
+          <Card id="section-8" className={errorsBySection.some(s => s.sectionId === 'section-8') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Users className="h-5 w-5" />
@@ -3414,7 +3567,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 9 - Current Occupation */}
-          <Card>
+          <Card id="section-9" className={errorsBySection.some(s => s.sectionId === 'section-9') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Briefcase className="h-5 w-5" />
@@ -3547,7 +3700,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 10 - Previous Occupation */}
-          <Card>
+          <Card id="section-10" className={errorsBySection.some(s => s.sectionId === 'section-10') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <Briefcase className="h-5 w-5" />
@@ -3647,6 +3800,13 @@ export default function FormularioPage() {
                           onChange={(e) => updatePrevJob(index, 'companyAddress', e.target.value)}
                         />
                       </div>
+                      <div className="space-y-2">
+                        <Label>Número *</Label>
+                        <Input
+                          value={job.companyNumber}
+                          onChange={(e) => updatePrevJob(index, 'companyNumber', e.target.value)}
+                        />
+                      </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
@@ -3716,7 +3876,7 @@ export default function FormularioPage() {
           </Card>
 
           {/* Section 11 - University */}
-          <Card>
+          <Card id="section-11" className={errorsBySection.some(s => s.sectionId === 'section-11') ? 'border-red-400 border-2' : ''}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-[#623AA2]">
                 <GraduationCap className="h-5 w-5" />
