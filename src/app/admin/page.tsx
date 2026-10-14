@@ -1153,6 +1153,56 @@ export default function AdminPage() {
   });
 
   const sortedCPFs = [...authorizedCPFs].sort((a, b) => {
+    // Handle different sort fields
+    if (cpfSortField === 'status') {
+      // Define status order for logical sorting: ATIVO -> BLOQUEADO -> PROCESSADO
+      const statusOrder = { ATIVO: 0, BLOQUEADO: 1, PROCESSADO: 2 };
+
+      // Get status values for comparison
+      const statusA = a.processed || a.blockedReason === 'Formulário processado' ? 'PROCESSADO' : a.blocked ? 'BLOQUEADO' : 'ATIVO';
+      const statusB = b.processed || b.blockedReason === 'Formulário processado' ? 'PROCESSADO' : b.blocked ? 'BLOQUEADO' : 'ATIVO';
+
+      const orderA = statusOrder[statusA] ?? 999;
+      const orderB = statusOrder[statusB] ?? 999;
+
+      if (orderA !== orderB) {
+        return cpfSortDir === 'desc' ? orderB - orderA : orderA - orderB;
+      }
+      // If status is same, sort by date as tiebreaker
+      const dateA = a.createdAt?.seconds || 0;
+      const dateB = b.createdAt?.seconds || 0;
+      return cpfSortDir === 'desc' ? dateB - dateA : dateA - dateB;
+    }
+
+    if (cpfSortField === 'cpf') {
+      const valueA = a.cpf ?? '';
+      const valueB = b.cpf ?? '';
+      if (valueA < valueB) return cpfSortDir === 'desc' ? 1 : -1;
+      if (valueA > valueB) return cpfSortDir === 'desc' ? -1 : 1;
+      return 0;
+    }
+
+    if (cpfSortField === 'nome') {
+      const valueA = (a.nome ?? '').toLowerCase();
+      const valueB = (b.nome ?? '').toLowerCase();
+      if (valueA < valueB) return cpfSortDir === 'desc' ? 1 : -1;
+      if (valueA > valueB) return cpfSortDir === 'desc' ? -1 : 1;
+      return 0;
+    }
+
+    if (cpfSortField === 'conta') {
+      const valueA = !!a.hasAccount && !!a.email ? 1 : 0; // Has account = 1, no account = 0
+      const valueB = !!b.hasAccount && !!b.email ? 1 : 0;
+      if (valueA !== valueB) return cpfSortDir === 'desc' ? valueB - valueA : valueA - valueB;
+      // If account status is same, sort by email
+      const emailA = (a.email ?? '').toLowerCase();
+      const emailB = (b.email ?? '').toLowerCase();
+      if (emailA < emailB) return cpfSortDir === 'desc' ? 1 : -1;
+      if (emailA > emailB) return cpfSortDir === 'desc' ? -1 : 1;
+      return 0;
+    }
+
+    // Default to date sorting (for 'data' field and fallback)
     const dateA = a.createdAt?.seconds || 0;
     const dateB = b.createdAt?.seconds || 0;
     return cpfSortDir === 'desc' ? dateB - dateA : dateA - dateB;
