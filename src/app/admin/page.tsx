@@ -614,6 +614,10 @@ export default function AdminPage() {
 
     // Nome completo
     const nomeCompleto = `${get('firstName')} ${get('lastName')}`.trim();
+    // Extract birth year for first line
+    const birthDateStr = get('birthDate');
+    const birthYear = birthDateStr ? birthDateStr.substring(0, 4) : '';
+    const nomeCompletoComAno = birthYear ? `${nomeCompleto} (${birthYear})` : nomeCompleto;
 
     const sections: { [key: string]: string[] } = {
       '0. LOCAL DE SOLICITAÇÃO': [],
@@ -650,7 +654,17 @@ export default function AdminPage() {
       addField('1. INFORMAÇÕES PESSOAIS', 'Antigo Nome', get('oldFirstName'));
     }
     addField('1. INFORMAÇÕES PESSOAIS', 'Data de Nascimento', formatDateForTXT(get('birthDate')));
-    addField('1. INFORMAÇÕES PESSOAIS', 'Cidade/Estado de Nascimento', get('birthCity'));
+    // Split Cidade/Estado de Nascimento into separate fields
+    const birthCityStr = get('birthCity');
+    if (birthCityStr) {
+      const [city, state] = birthCityStr.split('/').map(part => part.trim());
+      if (city) {
+        addField('1. INFORMAÇÕES PESSOAIS', 'Cidade de Nascimento', city);
+      }
+      if (state) {
+        addField('1. INFORMAÇÕES PESSOAIS', 'Estado de Nascimento', state);
+      }
+    }
     addField('1. INFORMAÇÕES PESSOAIS', 'País de Nascimento', get('birthCountry'));
     addField('1. INFORMAÇÕES PESSOAIS', 'Estado Civil', get('maritalStatus'));
     addField('1. INFORMAÇÕES PESSOAIS', 'CPF', cpfLimpo);
@@ -702,8 +716,13 @@ export default function AdminPage() {
     }
 
     // Section 5 - Passaporte
-    addField('5. PASSAPORTE', 'Série', get('passportSeries'));
-    addField('5. PASSAPORTE', 'Número', get('passportNumber'));
+    // Série e Número juntos
+    const passportSeriesStr = get('passportSeries');
+    const passportNumberStr = get('passportNumber');
+    const passportCompleto = `${passportSeriesStr}${passportNumberStr}`;
+    if (passportCompleto) {
+      addField('5. PASSAPORTE', 'Série e Número', passportCompleto);
+    }
     addField('5. PASSAPORTE', 'Cidade de Emissão', get('passportIssueCity'));
     addField('5. PASSAPORTE', 'Estado de Emissão', get('passportIssueState'));
     addField('5. PASSAPORTE', 'Data de Emissão', formatDateForTXT(get('passportIssueDate')));
@@ -835,7 +854,15 @@ export default function AdminPage() {
     // Section 9 - Ocupação Atual
     addField('9. OCUPAÇÃO ATUAL', 'Ocupação Atual', get('jobTitle'));
     addField('9. OCUPAÇÃO ATUAL', 'Nome da Empresa/Instituição', get('companyName'));
-    addField('9. OCUPAÇÃO ATUAL', 'Endereço da Empresa', get('companyAddress'));
+    // Endereço com número
+    const companyNumberStr = get('companyNumber');
+    const companyAddressStr = get('companyAddress');
+    const enderecoCompleto = companyNumberStr && companyAddressStr
+      ? `${companyNumberStr} ${companyAddressStr}`
+      : companyNumberStr || companyAddressStr || '';
+    if (enderecoCompleto) {
+      addField('9. OCUPAÇÃO ATUAL', 'Endereço da Empresa', enderecoCompleto);
+    }
     addField('9. OCUPAÇÃO ATUAL', 'Cidade da Empresa', get('companyCity'));
     addField('9. OCUPAÇÃO ATUAL', 'Estado da Empresa', get('companyState'));
     addField('9. OCUPAÇÃO ATUAL', 'CEP da Empresa', cepClean(dados.companyZip));
@@ -874,7 +901,15 @@ export default function AdminPage() {
     addField('11. UNIVERSITÁRIO', 'Frequentou escola ou universidade', get('hasUniversity'));
     if (get('hasUniversity') === 'SIM') {
       addField('11. UNIVERSITÁRIO', 'Nome da Instituição', get('universityName'));
-      addField('11. UNIVERSITÁRIO', 'Endereço da Instituição', get('universityAddress'));
+      // Endereço da Instituição com número
+      const universityNumberStr = get('universityNumber');
+      const universityAddressStr = get('universityAddress');
+      const enderecoInstituicao = universityNumberStr && universityAddressStr
+        ? `${universityNumberStr} ${universityAddressStr}`
+        : universityNumberStr || universityAddressStr || '';
+      if (enderecoInstituicao) {
+        addField('11. UNIVERSITÁRIO', 'Endereço da Instituição', enderecoInstituicao);
+      }
       addField('11. UNIVERSITÁRIO', 'Cidade da Instituição', get('universityCity'));
       addField('11. UNIVERSITÁRIO', 'Estado da Instituição', get('universityState'));
       addField('11. UNIVERSITÁRIO', 'CEP da Instituição', cepClean(dados.universityZip));
@@ -915,11 +950,28 @@ export default function AdminPage() {
 
     // Montar TXT final
     let txt = `FORMULÁRIO DS-160 - VISTO AMERICANO\n`;
-    txt += `${nomeCompleto}\n`;
+    txt += `${nomeCompletoComAno}\n`;
     txt += `Data de Geração: ${getBrazilDateTimeString()}\n`;
 
-    Object.entries(sections).forEach(([section, items]) => {
-      if (items.length > 0) {
+    // Custom section order as requested
+    const sectionOrder = [
+      '1. INFORMAÇÕES PESSOAIS',
+      '6. VIAGEM',
+      '7. VISTOS ANTERIORES',
+      '2. INFORMAÇÕES DE CONTATO',
+      '4. REDES SOCIAIS',
+      '5. PASSAPORTE',
+      '8. INFORMAÇÕES FAMILIARES',
+      '9. OCUPAÇÃO ATUAL',
+      '10. OCUPAÇÃO ANTERIOR',
+      '11. UNIVERSITÁRIO',
+      '12. VIAGENS INTERNACIONAIS',
+      '13. DADOS DO I20'
+    ];
+
+    sectionOrder.forEach(section => {
+      const items = sections[section];
+      if (items && items.length > 0) {
         txt += `====== ${section} ======\n`;
         items.forEach(item => {
           txt += `${item}\n`;
