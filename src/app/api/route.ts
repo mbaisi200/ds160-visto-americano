@@ -20,6 +20,12 @@ export async function GET(request: NextRequest) {
     // Dynamic import to avoid build errors
     const { adminAuth } = await import('@/lib/firebase-admin');
 
+    if (!adminAuth) {
+      return NextResponse.json({
+        error: 'Firebase Admin não configurado. Configure FIREBASE_SERVICE_ACCOUNT no .env',
+      }, { status: 500 });
+    }
+
     // List up to 1000 users
     const listUsersResult = await adminAuth.listUsers(1000);
     const users = listUsersResult.users.map(user => ({
@@ -65,6 +71,12 @@ export async function POST(request: NextRequest) {
 
     // Dynamic import to avoid build errors
     const { adminAuth } = await import('@/lib/firebase-admin');
+
+    if (!adminAuth) {
+      return NextResponse.json({
+        error: 'Firebase Admin não configurado. Configure FIREBASE_SERVICE_ACCOUNT no .env',
+      }, { status: 500 });
+    }
 
     switch (action) {
       case 'reset-password': {

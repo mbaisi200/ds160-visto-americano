@@ -469,17 +469,7 @@ export default function FormularioPage() {
     existingFormIdRef.current = existingFormId;
   }, [existingFormId]);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-
-    if (!loading && user && userData?.cpf) {
-      loadFormData();
-    }
-  }, [user, loading, router, userData]);
-
-  const loadFormData = async () => {
+  async function loadFormData() {
     try {
       const cpfNumeros = userData?.cpf?.replace(/\D/g, '') || '';
       
@@ -531,7 +521,20 @@ export default function FormularioPage() {
     } finally {
       setLoadingForm(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+
+    if (loading || !user || !userData?.cpf) return;
+
+    const initForm = async () => {
+      await loadFormData();
+    };
+    void initForm();
+  }, [user, loading, router, userData]);
 
   // Salvar rascunho manualmente
   const [saving, setSaving] = useState(false);

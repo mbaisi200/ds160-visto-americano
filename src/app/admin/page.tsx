@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -73,6 +73,7 @@ interface AuthorizedCPF {
   email?: string;
   hasAccount?: boolean;
   blocked?: boolean;
+  blockedReason?: string;
   processed?: boolean;
   processedAt?: { seconds: number; nanoseconds: number };
   createdAt?: { seconds: number; nanoseconds: number };
@@ -139,7 +140,7 @@ export default function AdminPage() {
     initAdmin();
   }, [user, loading, router, userData]);
 
-  const loadData = async () => {
+  async function loadData() {
     try {
       setErrorData(null);
       setLoadingData(true);
@@ -189,7 +190,7 @@ export default function AdminPage() {
     } finally {
       setLoadingData(false);
     }
-  };
+  }
 
   const handleSignOut = async () => {
     await signOut();
@@ -226,7 +227,6 @@ export default function AdminPage() {
       const email = `${cleanCPF}@ds160.local`;
 
       // Usar Firebase REST API para criar usuário sem afetar a sessão do admin
-      console.log('Criando usuário via REST API...');
       const response = await fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
         {
@@ -255,7 +255,6 @@ export default function AdminPage() {
 
       const userData = await response.json();
       const newUserId = userData.localId;
-      console.log('Usuário criado com UID:', newUserId);
 
       // Criar documento do usuário no Firestore
       await setDoc(doc(db, 'users', newUserId), {
@@ -1148,12 +1147,12 @@ export default function AdminPage() {
     }
   };
 
-  const SortHeader = ({ field, children }: { field: string; children: ReactNode }) => (
+  const sortHeader = (field: string, label: string) => (
     <button
       onClick={() => toggleCpfSort(field)}
       className="flex items-center gap-1 hover:text-[#623AA2] transition-colors"
     >
-      {children}
+      {label}
       <span className="text-xs">{cpfSortField === field ? (cpfSortDir === 'asc' ? '▲' : '▼') : '⇅'}</span>
     </button>
   );
@@ -1491,7 +1490,7 @@ export default function AdminPage() {
                             {formatCPFDisplay(form.cpf)}
                           </td>
                           <td className="py-3 px-4 sm:px-2 text-sm text-gray-600">
-                            {form.dados?.email || '-'}
+                            {String(form.dados?.email || '-')}
                           </td>
                           <td className="py-3 px-4 sm:px-2 text-sm text-gray-500">
                             {formatDate(form.createdAt)}
@@ -1604,12 +1603,12 @@ export default function AdminPage() {
                   <table className="w-full min-w-[800px]">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3 px-4 sm:px-2"><SortHeader field="cpf">CPF</SortHeader></th>
+                        <th className="text-left py-3 px-4 sm:px-2">{sortHeader('cpf', 'CPF')}</th>
                         <th className="text-left py-3 px-4 sm:px-2">Nome</th>
                         <th className="text-left py-3 px-4 sm:px-2">Conta</th>
                         <th className="text-left py-3 px-4 sm:px-2">Senha Padrão</th>
-                        <th className="text-left py-3 px-4 sm:px-2"><SortHeader field="data">Data de Envio</SortHeader></th>
-                        <th className="text-left py-3 px-4 sm:px-2"><SortHeader field="status">Status</SortHeader></th>
+                        <th className="text-left py-3 px-4 sm:px-2">{sortHeader('data', 'Data de Envio')}</th>
+                        <th className="text-left py-3 px-4 sm:px-2">{sortHeader('status', 'Status')}</th>
                         <th className="text-right py-3 px-4 sm:px-2">Ações</th>
                       </tr>
                     </thead>

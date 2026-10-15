@@ -8,19 +8,25 @@ Sistema para preenchimento e gestão do formulário DS-160 para visto americano.
 - Login via CPF com senha padrão
 - Cadastro com validação de CPF autorizado
 - Formulário DS-160 completo com todas as seções:
-  - Informações Pessoais, Contato, Passaporte, Viagem, Vistos Anteriores
+  - Informações Pessoais (inclui estado civil), Contato, Passaporte, Viagem, Vistos Anteriores
   - Família, Trabalho, Educação, Viagens Internacionais, I-20
+- Validação agrupada por seção com links clicáveis para navegar até o campo com erro
+- Campo "número da seção" (seção 10) para vincular a resposta à seção do formulário
+- Campos obrigatórios reforçados nas seções 9-11 (inclusive número do endereço da empresa)
+- Busca automática de endereço por CEP via ViaCEP nas seções 9-11 (CEP vem primeiro)
+- Máscaras de telefone, numéricas e monetárias; e-mail e redes sociais em minúsculas
+- Patrocinador obrigatório e campos de remuneração com validação melhorada
 - Salvamento automático de rascunho
-- Revisão e confirmação de envio
-- Geração de arquivo TXT com todos os dados
+- Tela de revisão e confirmação de envio
+- Geração de arquivo TXT no formato brasileiro (datas BR, CPF limpo, seções com `======`, arquivo salvo com nome do cliente)
 
 ### Admin
 - Painel com visão geral de formulários (rascunho/pendente/processado)
 - Gestão de CPFs autorizados (autorizar, bloquear, editar, remover)
-- Exibição do nome do cliente ao lado do CPF
+- Exibição do nome do cliente ao lado do CPF e ordenação das colunas (CPF, data, status)
 - Visualização completa de formulários
 - Marcação como processado (bloqueia acesso do cliente)
-- Geração de TXT e PDF dos formulários
+- Geração de TXT e PDF dos formulários (mesmo formato do TXT do cliente)
 - Exportação de dados
 - Gestão de senhas de usuários
 

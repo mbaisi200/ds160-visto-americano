@@ -75,7 +75,7 @@ export default function AdminSenhasPage() {
     checkAdmin();
   }, [user, loading, router]);
 
-  const fetchAdminStatus = async () => {
+  async function fetchAdminStatus() {
     setLoadingStatus(true);
     try {
       const response = await fetch('/api/admin/users');
@@ -95,7 +95,7 @@ export default function AdminSenhasPage() {
     } finally {
       setLoadingStatus(false);
     }
-  };
+  }
 
   const handleResetAdminPassword = async () => {
     if (!newAdminPassword || newAdminPassword.length < 6) {
