@@ -670,8 +670,15 @@ export default function AdminPage() {
     addField('1. INFORMAÇÕES PESSOAIS', 'RG', get('rg'));
 
     // Section 2 - Informações de Contato
-    addField('2. INFORMAÇÕES DE CONTATO', 'Endereço', get('address'));
-    addField('2. INFORMAÇÕES DE CONTATO', 'Número', get('addressNumber'));
+    // Endereço com número - mover número para o final
+    const addressNumberStr = get('addressNumber');
+    const addressStr = get('address');
+    const enderecoCompleto = addressStr && addressNumberStr
+      ? `${addressStr} ${addressNumberStr}`
+      : addressStr || addressNumberStr || '';
+    if (enderecoCompleto) {
+      addField('2. INFORMAÇÕES DE CONTATO', 'Endereço', enderecoCompleto);
+    }
     addField('2. INFORMAÇÕES DE CONTATO', 'Complemento', get('addressComplement'));
     addField('2. INFORMAÇÕES DE CONTATO', 'Bairro', get('neighborhood'));
     addField('2. INFORMAÇÕES DE CONTATO', 'Cidade', get('city'));
@@ -853,14 +860,25 @@ export default function AdminPage() {
     // Section 9 - Ocupação Atual
     addField('9. OCUPAÇÃO ATUAL', 'Ocupação Atual', get('jobTitle'));
     addField('9. OCUPAÇÃO ATUAL', 'Nome da Empresa/Instituição', get('companyName'));
-    // Endereço com número
+    // Endereço com número - mover número para o final se estiver no início
     const companyNumberStr = get('companyNumber');
     const companyAddressStr = get('companyAddress');
-    const enderecoCompleto = companyNumberStr && companyAddressStr
+    let enderecoEmpresa = companyNumberStr && companyAddressStr
       ? `${companyNumberStr} ${companyAddressStr}`
       : companyNumberStr || companyAddressStr || '';
-    if (enderecoCompleto) {
-      addField('9. OCUPAÇÃO ATUAL', 'Endereço da Empresa', enderecoCompleto);
+    // Função para mover número inicial para o final
+    const moveLeadingNumberToEnd = (address) => {
+      if (!address || typeof address !== 'string') return address;
+      const match = address.match(/^(\d+)(.*)$/);
+      if (match) {
+        const [, number, rest] = match;
+        return (rest.trim() + ' ' + number).trim();
+      }
+      return address;
+    };
+    enderecoEmpresa = moveLeadingNumberToEnd(enderecoEmpresa);
+    if (enderecoEmpresa) {
+      addField('9. OCUPAÇÃO ATUAL', 'Endereço da Empresa', enderecoEmpresa);
     }
     addField('9. OCUPAÇÃO ATUAL', 'Cidade da Empresa', get('companyCity'));
     addField('9. OCUPAÇÃO ATUAL', 'Estado da Empresa', get('companyState'));
@@ -900,12 +918,23 @@ export default function AdminPage() {
     addField('11. UNIVERSITÁRIO', 'Frequentou escola ou universidade', get('hasUniversity'));
     if (get('hasUniversity') === 'SIM') {
       addField('11. UNIVERSITÁRIO', 'Nome da Instituição', get('universityName'));
-      // Endereço da Instituição com número
+      // Endereço da Instituição com número - mover número para o final se estiver no início
       const universityNumberStr = get('universityNumber');
       const universityAddressStr = get('universityAddress');
-      const enderecoInstituicao = universityNumberStr && universityAddressStr
+      let enderecoInstituicao = universityNumberStr && universityAddressStr
         ? `${universityNumberStr} ${universityAddressStr}`
         : universityNumberStr || universityAddressStr || '';
+      // Função para mover número inicial para o final
+      const moveLeadingNumberToEnd = (address) => {
+        if (!address || typeof address !== 'string') return address;
+        const match = address.match(/^(\d+)(.*)$/);
+        if (match) {
+          const [, number, rest] = match;
+          return (rest.trim() + ' ' + number).trim();
+        }
+        return address;
+      };
+      enderecoInstituicao = moveLeadingNumberToEnd(enderecoInstituicao);
       if (enderecoInstituicao) {
         addField('11. UNIVERSITÁRIO', 'Endereço da Instituição', enderecoInstituicao);
       }
